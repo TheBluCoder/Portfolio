@@ -8,8 +8,10 @@ import "vue-toastification/dist/index.css";
 
 
 const app = createApp(App)
-
+const options = {
+  maxToasts:1,
+}
 app.use(createPinia())
-app.use(Toast)
+app.use(Toast,options)
 
 app.mount('#app')

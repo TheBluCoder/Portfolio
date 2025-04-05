@@ -18,7 +18,7 @@ defineOptions({ name: 'NavbarComponent' })
     >
       <nav
         tabindex="0"
-        class="group z-30 backdrop-blur-md bg-transparent h-full flex flex-col items-center justify-center gap-20 p-2 hover:text-blue-200/90 focus:text-blue-200/90 active:text-blue-200/90 transition-all duration-200 text-gray-400/40"
+        class="group z-50 backdrop-blur-md bg-transparent h-full flex flex-col items-center justify-center gap-20 p-2 hover:text-blue-200/90 focus:text-blue-200/90 active:text-blue-200/90 transition-all duration-200 text-gray-400/40"
       >
         <NavButton>Home</NavButton>
         <NavButton>About</NavButton>

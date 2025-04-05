@@ -1,13 +1,36 @@
 <template>
-  <section id="home" class="min-h-screen w-full flex items-center justify-center bg-black">
-    <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] p-8">
+  <section
+    id="home"
+    class="min-h-screen w-full flex flex-col items-center justify-center bg-black p-8"
+    tabindex="0"
+    @keyup.enter="$emit('switch-view')"
+    focusable="true"
+    autofocus
+  >
+    <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw]">
       <div class="text-white text-3xl md:text-6xl lg:text-8xl mb-6">
         <span class="text-green-500 font-semibold whitespace-nowrap">ikeoluwa@blucoder</span>:
         <span class="text-purple-300/90 whitespace-nowrap">/home</span>
         <span class="mr-2 whitespace-nowrap">$</span>
       </div>
       <div class="typing-container">
-        <div class="animate-typing text-white/50 text-2xl md:text-5xl lg:text-7xl" @animationend="handleAnimationEnd">
+        <div
+          class="animate-typing text-white/50 text-2xl md:text-5xl lg:text-7xl"
+          @animationend="handleAnimationEnd"
+        >
+          >>{{ typingText }}
+        </div>
+      </div>
+    </div>
+    <!--    reflection container -->
+    <div
+      class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] rotate-x-180 blur-[3px] -mt-4 mask-b-from-10% mask-b-from-gray mask-b-to-gray-50/10"
+    >
+      <div class="typing-container">
+        <div
+          class="animate-typing text-white/50 text-2xl md:text-5xl lg:text-7xl"
+          @animationend="handleAnimationEnd"
+        >
           >>{{ typingText }}
         </div>
       </div>
@@ -16,23 +39,22 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useToast } from 'vue-toastification'
+import { POSITION } from 'vue-toastification'
 
+const emit = defineEmits(['switch-view'])
 const typingText = ref('bash hello_world.sh')
 const handleAnimationEnd = (event) => {
   if (event.animationName === 'typing') {
-    const toast= useToast()
-    toast.info("Click ENTER to continue...", {
-      position:"bottom-right",
+    const toast = useToast()
+    toast.info('Click ENTER to continue...', {
+      position: POSITION.BOTTOM_RIGHT,
       closeOnClick: true,
       pauseOnHover: true,
-      closeButton: true,
-      toastClassName: "toast-style",
+      toastClassName: ['toast-style'],
       showCloseButtonOnHover: true,
-      timeout:0
-
-
+      timeout: 0,
     })
   }
 }
