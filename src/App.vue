@@ -2,7 +2,7 @@
   <div>
     <Layout>
       <div>
-        <Home v-show="!show_home_w_dir" class="w-full" @switch-view="show_home_w_dir = true" />
+        <HomeView v-show="!show_home_w_dir" class="w-full" @switch-view="show_home_w_dir = true" />
         <Introduction v-show="show_home_w_dir" />
       </div>
     </Layout>
@@ -12,9 +12,8 @@
 
 <script setup>
 import Layout from './components/Layout.vue'
-import Home from './components/Home.vue'
-import Home_w_directories from '@/components/Home_w_directories.vue'
-import Introduction from './components/Introduction.vue'
+import HomeView from './views/HomeView.vue'
+import Introduction from './views/Introduction.vue'
 import { ref } from 'vue'
 
 const show_home_w_dir = ref(false)

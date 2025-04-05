@@ -1,9 +1,13 @@
 <script setup>
-import { BrainIcon } from 'lucide-vue-next'
 import { MenuIcon, XIcon } from 'lucide-vue-next'
 import Navbar from './Navbar.vue'
 import { ref } from 'vue'
+import SocialMenu from '@/components/SocialMenu.vue'
 const isOpen = ref(true)
+
+const openGlobalChat = () => {
+  console.log('openGlobalChat')
+}
 </script>
 
 <template>
@@ -15,16 +19,11 @@ const isOpen = ref(true)
       />
     </div>
 
+    <SocialMenu @open-chat="openGlobalChat" />
     <Navbar :isOpen="isOpen" />
-    <div class="bg-gradient-to-r from-blue-200/20 to-black w-15 bg-blend-overlay"></div>
+    <div class="bg-gradient-to-r from-blue-200/20 to-black md:15 bg-blend-overlay"></div>
     <div class="flex-grow"><slot /></div>
   </div>
-  <button
-    @click="openGlobalChat"
-    class="fixed bottom-6 left-8 md:left-22 w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center shadow-lg bg-gradient-to-r to-white/50 transition-colors z-50 ai-chat-button border border-purple-900/30"
-  >
-    <BrainIcon class="w-6 h-6" />
-  </button>
 </template>
 
 <style scoped>
