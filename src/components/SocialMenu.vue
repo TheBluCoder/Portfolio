@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed -bottom-1 left-[52%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4"
+    class="fixed -bottom-1 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4"
   >
     <a href="https://linkedin.com" target="_blank" class="social-icon-link animate">
       <LinkedinIcon class="w-8 h-8" />

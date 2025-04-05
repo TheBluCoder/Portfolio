@@ -12,7 +12,10 @@ defineProps({
 </script>
 <template>
   <!-- Original Folder -->
-  <div class="folder-card group cursor-pointer" :style="{ animationDelay: `${index * 200}ms` }">
+  <div
+    class="folder-card group cursor-pointer fade-in-up"
+    :style="{ animationDelay: `${index * 200}ms` }"
+  >
     <div
       class="flex flex-col items-center justify-center p-6 bg-gray-900/50 rounded-lg backdrop-blur-sm border border-gray-700/30 transition-all duration-300 hover:border-green-500/30 hover:bg-gray-800/50"
     >
@@ -27,12 +30,15 @@ defineProps({
 <style scoped>
 .folder-card {
   perspective: 1000px;
-  opacity: 0;
-  animation: fadeInUp 0.6s ease forwards;
+  animation: none;
 }
 
 .folder-card:hover {
-  animation: subtleBounce 2s infinite;
+  animation: subtleBounce 1s infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease forwards;
 }
 
 @keyframes fadeInUp {
