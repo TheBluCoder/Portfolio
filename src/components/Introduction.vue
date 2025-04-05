@@ -118,6 +118,10 @@ onMounted(() => {
 
 .folder-card {
   perspective: 1000px;
+  animation: none;
+}
+.folder-card:hover {
+  animation: subtleBounce 2s infinite;
 }
 
 .folder-reflection {
@@ -128,6 +132,18 @@ onMounted(() => {
 @keyframes blink {
   50% {
     border-color: transparent;
+  }
+}
+
+@keyframes subtleBounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
   }
 }
 </style>
