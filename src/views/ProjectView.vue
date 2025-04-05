@@ -26,10 +26,29 @@ onMounted(() => {
 })
 </script>
 
+<style>
+.custom-scrollbar {
+  scrollbar-width: calc(4px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+</style>
+
 <template>
   <div class="h-full w-full place-content-center place-items-center">
     <Carousel
-      class="relative w-full max-w-md md:max-w-1/2 lg:max-w-3/4"
+      class="relative w-full max-w-md md:max-w-1/2 lg:max-w-3/5"
       :plugins="[plugin]"
       @mouseenter="plugin.stop"
       @mouseleave="[plugin.reset(), plugin.play()]"
@@ -64,7 +83,7 @@ onMounted(() => {
               </CaHeaderrdHeader>
               <CardContent class="flex flex-col items-start justify-start p-2 md:p-4">
                 <p
-                  class="text-gray-200/60 text-xs md:text-sm lg:text-base font-light font-mono leading-relaxed overflow-y-auto max-h-[150px]"
+                  class="text-gray-200/60 text-xs md:text-sm lg:text-base font-light font-mono leading-relaxed overflow-y-auto max-h-[150px] custom-scrollbar"
                 >
                   CiteMe is a modern, full-stack application designed to help students generate
                   references and in-line citations efficiently. The system provides intelligent
