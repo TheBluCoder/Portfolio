@@ -5,6 +5,7 @@ defineProps({
   isOpen: {
     type: Boolean,
     required: true,
+    default: false
   },
 })
 defineOptions({ name: 'NavbarComponent' })
@@ -14,7 +15,7 @@ defineOptions({ name: 'NavbarComponent' })
   <Transition name="slide">
     <div
       v-show="isOpen"
-      class="fixed  z-20 text-2xl h-screen w-screen md:w-auto md:border-r-2 md:border-gray-300/10 px-2 shadow"
+      class="fixed  z-30 text-2xl h-screen w-screen md:w-auto md:border-r-2 md:border-gray-300/10 px-2 shadow"
     >
       <nav
         tabindex="0"

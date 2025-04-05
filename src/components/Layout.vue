@@ -3,7 +3,7 @@ import { MenuIcon, XIcon } from 'lucide-vue-next'
 import Navbar from './Navbar.vue'
 import { ref } from 'vue'
 import SocialMenu from '@/components/SocialMenu.vue'
-const isOpen = ref(true)
+const isOpen = ref(false)
 
 const openGlobalChat = () => {
   console.log('openGlobalChat')

@@ -53,9 +53,11 @@ const folders = [
   { name: 'Gallery', icon: ImageIcon },
 ]
 
+const emits = defineEmits(['switch-view'])
+
 const handleFolderClick = (folderName) => {
   // Handle folder click - can be implemented later
-  console.log(`Clicked ${folderName}`)
+  emits('switch-view', folderName.toLowerCase())
 }
 
 const typeText = async () => {

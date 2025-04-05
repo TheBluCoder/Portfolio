@@ -1,22 +1,20 @@
 <template>
-  <div>
+  <div class="h-full">
     <Layout>
-      <div>
-        <HomeView v-show="!show_home_w_dir" class="w-full" @switch-view="show_home_w_dir = true" />
-        <Introduction v-show="show_home_w_dir" />
+      <div class="h-full w-full">
+        <router-view class="w-full h-full" @switch-view="switch_to_introduction($event)"></router-view>
       </div>
     </Layout>
-    <!-- <home_w_directories v-show="show_home_w_dir" /> -->
   </div>
 </template>
 
 <script setup>
 import Layout from './components/Layout.vue'
-import HomeView from './views/HomeView.vue'
-import Introduction from './views/Introduction.vue'
-import { ref } from 'vue'
+import router from './router'
 
-const show_home_w_dir = ref(false)
+const switch_to_introduction = (view)=>{
+  router.push(`/${view}`)
+}
 </script>
 
 <style scoped></style>

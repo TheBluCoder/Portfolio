@@ -3,7 +3,7 @@
     id="home"
     class="min-h-screen w-full flex flex-col items-center justify-center bg-black p-8"
     tabindex="0"
-    @keyup.enter="$emit('switch-view')"
+    @keyup.enter="$emit('switch-view','introduction')"
     focusable="true"
     autofocus
   >
