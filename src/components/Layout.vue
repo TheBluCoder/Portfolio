@@ -1,13 +1,29 @@
 <script setup>
 import { MenuIcon, XIcon } from 'lucide-vue-next'
 import Navbar from './Navbar.vue'
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
 import SocialMenu from '@/components/SocialMenu.vue'
+import ChatBox from '@/components/ChatBox.vue'
+
 const isOpen = ref(false)
+const isChatOpen = ref(false)
+const chatProjectContext = ref(null)
 
 const openGlobalChat = () => {
-  console.log('openGlobalChat')
+  chatProjectContext.value = null
+  isChatOpen.value = true
 }
+
+const closeChat = () => {
+  isChatOpen.value = false
+  chatProjectContext.value = null
+}
+
+provide('openProjectChat', (project) => {
+  console.log('Opening project chat:', project)
+  chatProjectContext.value = project
+  isChatOpen.value = true
+})
 </script>
 
 <template>
@@ -22,7 +38,19 @@ const openGlobalChat = () => {
     <SocialMenu @open-chat="openGlobalChat" />
     <Navbar :isOpen="isOpen" />
     <div class="bg-gradient-to-r from-blue-200/20 to-black md:15 bg-blend-overlay"></div>
-    <div class="flex-grow"><slot /></div>
+    <div class="flex-grow">
+      <slot />
+    </div>
+
+    <!-- Chat overlay for mobile -->
+    <div
+      v-if="isChatOpen"
+      class="fixed inset-0 bg-black/20 backdrop-blur-sm md:hidden"
+      @click="closeChat"
+    ></div>
+
+    <!-- Chat component -->
+    <ChatBox :is-open="isChatOpen" :project-context="chatProjectContext" @close="closeChat" />
   </div>
 </template>
 

@@ -9,9 +9,10 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
-import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card/index.js'
+import { CardHeader } from '@/components/ui/card/index.js'
 import { onMounted } from 'vue'
 import ProjectButtons from '@/components/ProjectButtons.vue'
+import { inject } from 'vue'
 
 const plugin = Autoplay({
   delay: 2000,
@@ -19,9 +20,10 @@ const plugin = Autoplay({
   stopOnInteraction: false,
 })
 
+const openProjectChat = inject('openProjectChat')
+
 const handleAskQuestion = (project) => {
-  // You can implement the question handling logic here
-  console.log('Ask question about:', project.name)
+  openProjectChat(project)
 }
 
 onMounted(() => {
@@ -55,10 +57,10 @@ onMounted(() => {
 <template>
   <div class="h-full w-full place-content-center place-items-center">
     <Carousel
-      class="relative w-full max-w-md md:max-w-1/2 lg:max-w-3/5"
+      class="relative w-full max-w-md md:max-w-[90%] md:hover:max-w-3/5 duration-500"
       :plugins="[plugin]"
       @mouseenter="plugin.stop"
-      @mouseleave="[plugin.reset(), plugin.play()]"
+      @mouseleave="[plugin.reset(), plugin.play(), console.log('mouseleave')]"
     >
       <CarouselContent>
         <CarouselItem
@@ -89,7 +91,7 @@ onMounted(() => {
               </CardHeader>
               <CardContent class="flex flex-col items-start justify-start p-2 md:px-4">
                 <p
-                  class="text-gray-200/60 text-xs md:text-sm lg:text-base font-light font-mono leading-relaxed overflow-y-auto max-h-[150px] custom-scrollbar"
+                  class="text-gray-200/60 text-md md:text-lg font-light font-mono leading-relaxed overflow-y-auto max-h-[150px] custom-scrollbar"
                 >
                   {{ project.description }}
                 </p>
