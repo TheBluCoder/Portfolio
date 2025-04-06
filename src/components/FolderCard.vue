@@ -34,11 +34,11 @@ defineProps({
 }
 
 .folder-card:hover {
-  animation: subtleBounce 1s infinite;
+  animation: subtleBounce 1.5s infinite;
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.6s ease forwards;
+  animation: fadeInUp 1s ease forwards;
 }
 
 @keyframes fadeInUp {

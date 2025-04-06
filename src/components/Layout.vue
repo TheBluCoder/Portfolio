@@ -27,7 +27,7 @@ provide('openProjectChat', (project) => {
 </script>
 
 <template>
-  <div class="h-full flex">
+  <div class="h-screen flex">
     <div @click="isOpen = !isOpen" class="fixed top-6 left-6 z-50">
       <Component
         :is="isOpen ? XIcon : MenuIcon"
@@ -41,6 +41,7 @@ provide('openProjectChat', (project) => {
     <div class="flex-grow">
       <slot />
     </div>
+    <div id="project-btn" class="h-20 fixed bottom-40 bg-transparent w-full"></div>
 
     <!-- Chat overlay for mobile -->
     <div

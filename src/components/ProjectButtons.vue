@@ -9,7 +9,7 @@ defineProps({
 
 <template>
   <div
-    class="text-sm md:text-base lg:text-lg absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 rounded-md flex items-center justify-center gap-4"
+    class="text-sm md:text-base lg:text-lg absolute inset-0 bg-black/10 backdrop-blur-xs flex transition-all duration-300 rounded-md items-center justify-center gap-4"
   >
     <a
       :href="project.demo"

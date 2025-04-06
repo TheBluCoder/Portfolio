@@ -43,7 +43,7 @@ defineEmits(['open-chat'])
   border-radius: 50%;
   color: white;
   transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(50, 50, 50, 0.5);
   opacity: 0;
   transform: scale(0.8);
