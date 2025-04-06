@@ -1,5 +1,6 @@
 <script setup>
 import { Card, CardContent } from '@/components/ui/card'
+import projects from '@/data/projects.json'
 import {
   Carousel,
   CarouselContent,
@@ -10,12 +11,18 @@ import {
 import Autoplay from 'embla-carousel-autoplay'
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card/index.js'
 import { onMounted } from 'vue'
+import ProjectButtons from '@/components/ProjectButtons.vue'
 
 const plugin = Autoplay({
   delay: 2000,
   stopOnMouseEnter: true,
   stopOnInteraction: false,
 })
+
+const handleAskQuestion = (project) => {
+  // You can implement the question handling logic here
+  console.log('Ask question about:', project.name)
+}
 
 onMounted(() => {
   const carousel = document.getElementById('carouselItem')
@@ -55,7 +62,7 @@ onMounted(() => {
     >
       <CarouselContent>
         <CarouselItem
-          v-for="(_, index) in 5"
+          v-for="(project, index) in projects"
           :key="index"
           class="group focus:outline-0"
           tabindex="0"
@@ -66,35 +73,25 @@ onMounted(() => {
               class="bg-gray-600/50 group-hover:border-b-0 group-hover:rounded-b-none group-focus:rounded-b-none group-focus:border-b-0 gap-2 py-1 px-1"
             >
               <CardContent class="p-0">
-                <img
-                  src="/public/citeme.png"
-                  alt="screen shot of cite me app"
-                  class="w-fit h-fit rounded-md"
-                />
+                <div class="relative group">
+                  <img :src="project.image" :alt="project.name" class="w-fit h-fit rounded-md" />
+                  <ProjectButtons :project="project" @ask-question="handleAskQuestion" />
+                </div>
               </CardContent>
             </Card>
             <Card
               class="bg-gray-600/50 h-auto border-t-0 rounded-t-none hidden group-hover:block group-focus:block gap-2 py-1 px-1"
             >
-              <CaHeaderrdHeader
-                class="text-orange-200 text-sm md:text-lg font-semibold italic p-2 md:p-4"
+              <CardHeader
+                class="text-orange-200 text-sm md:text-lg font-semibold italic p-2 md:px-4"
               >
-                CiteMe - Automatic Citation Generation System
-              </CaHeaderrdHeader>
-              <CardContent class="flex flex-col items-start justify-start p-2 md:p-4">
+                {{ project.name }}
+              </CardHeader>
+              <CardContent class="flex flex-col items-start justify-start p-2 md:px-4">
                 <p
                   class="text-gray-200/60 text-xs md:text-sm lg:text-base font-light font-mono leading-relaxed overflow-y-auto max-h-[150px] custom-scrollbar"
                 >
-                  CiteMe is a modern, full-stack application designed to help students generate
-                  references and in-line citations efficiently. The system provides intelligent
-                  citation suggestions, reference management, and seamless integration with academic
-                  databases. Students do not have to worry about searching for sources to back
-                  essays and thesis. This web app will search the web, format your document with
-                  intext citation and include the references, sources and metrics to grade the
-                  credibility of the sources. The webapp also offers the choice of providing your
-                  own sources, in forms of urls, texts and pdfs and is able to use these sources to
-                  format your essays/thesis with intext citation and references in any citation
-                  format.
+                  {{ project.description }}
                 </p>
               </CardContent>
             </Card>

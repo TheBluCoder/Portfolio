@@ -1,0 +1,18 @@
+[
+    {
+        "name": "CiteMe - Automatic Citation Generation System",
+        "description": "CiteMe is a modern, full-stack application designed to help students generate references and in-line citations efficiently. The system provides intelligent citation suggestions, reference management, and seamless integration with academic databases. Students do not have to worry about searching for sources to back essays and thesis. This web app will search the web, format your document with intext citation and include the references, sources and metrics to grade the credibility of the sources. The webapp also offers the choice of providing your own sources, in forms of urls, texts and pdfs and is able to use these sources to format your essays/thesis with intext citation and references in any citation format.",
+        "image": "/public/citeme.png",
+        "demo": "https://citeme.blucoder.cc",
+        "type": "website",
+        "source_code_url": "https://github.com/theblucoder/citeme"
+    },
+    {
+        "name": "Git Mentor - Effortlessly contribute to open-source projects with AI-powered guidance",
+        "description": "GitMentor is a tool designed to help developers easily contribute to GitHub repositories. It provides AI-powered analysis of repositories and generates implementation plans for specific features, making it easier to understand the codebase and contribute effectively. The project consists of a frontend built with Next.js and a backend built with FastAPI, communicating through REST APIs. This project was built by a team of 3 for cuHacks 2025 and I was responsible for the backend development.  The project is being rebuilt by me under the name of GitRepoGuide as a full-stack application  using Vue.js, Tailwind CSS, FastAPI, Gemini and PostgreSQL as a vector database and would be featuring more features. Repo is available at https://github.com/TheBluCoder/GitRepoGuide",
+        "image": "/public/gitmentor.png",
+        "demo": "https://gitmentor.co",
+        "type": "website",
+        "source_code_url": "https://github.com/esosaoh/git-mentor"
+    }
+]
