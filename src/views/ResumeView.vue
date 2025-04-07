@@ -2,6 +2,8 @@
 import Experience from '@/components/Experience.vue'
 import Education from '@/components/Education.vue'
 import TechStack from '@/components/TechStack.vue'
+
+const resumeUrl = import.meta.env.VITE_RESUME_URL
 </script>
 
 <template>
@@ -10,7 +12,7 @@ import TechStack from '@/components/TechStack.vue'
     <TechStack />
 
     <!-- Experience Section -->
-    <Experience resumeUrl="#" />
+    <Experience :resumeUrl="resumeUrl" />
 
     <!-- Education Section -->
     <Education />
