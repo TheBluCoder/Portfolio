@@ -1,7 +1,7 @@
 <template>
   <div class="h-full">
     <Layout>
-      <div class="h-full w-full">
+      <div class="h-full w-[97%] mx-auto">
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
             <component :is="Component" @switch-view="switch_view($event)" />
