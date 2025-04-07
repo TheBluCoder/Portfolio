@@ -90,7 +90,7 @@ onMounted(() => {
 }
 
 .carousel-container {
-  @apply relative w-full max-w-[310px] sm:max-w-md md:max-w-xl lg:max-w-3xl mx-auto;
+  @apply relative w-full max-w-[300px] sm:max-w-md md:max-w-xl lg:max-w-3xl mx-auto;
 }
 
 .carousel-navigation {
