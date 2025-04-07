@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed bottom-3 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4 z-50"
+    class="fixed bottom-1 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4 z-50"
   >
     <a
       href="https://www.linkedin.com/in/ikeoluwa-oladele-15100820a/"
