@@ -8,7 +8,7 @@
         "source_code_url": "https://github.com/theblucoder/citeme"
     },
     {
-        "name": "Git Mentor - Effortlessly contribute to open-source projects with AI-powered guidance",
+        "name": "Git Mentor",
         "description": "<b>GitMentor</b> is a tool designed to help developers easily contribute to GitHub repositories. It provides AI-powered analysis of repositories and generates implementation plans for specific features, making it easier to understand the codebase and contribute effectively. The project consists of a frontend built with Next.js and a backend built with FastAPI, communicating through REST APIs. This project was built by a team of 3 for cuHacks 2025 and I was responsible for the backend development.  The project is being rebuilt by me under the name of GitRepoGuide as a full-stack application  using Vue.js, Tailwind CSS, FastAPI, Gemini and PostgreSQL as a vector database and would be featuring more features. Repo is available at <a href='https://github.com/TheBluCoder/GitRepoGuide'>https://github.com/TheBluCoder/GitRepoGuide</a>",
         "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1744039879/gitmentor_d15nd7.png",
         "demo": "https://gitmentor.co",
