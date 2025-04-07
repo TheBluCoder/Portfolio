@@ -61,7 +61,7 @@
       class="image-container w-full max-w-[90dvw] md:max-w-[80dvw] lg:max-w-[70dvw] flex justify-center animate-slide-up animation-delay-300"
     >
       <img
-        src="/public/portrait.jpg"
+        src="https://res.cloudinary.com/dao2elffs/image/upload/v1744039966/portrait_w0cvte.jpg"
         alt="Profile image"
         class="w-full max-w-md rounded-lg shadow-xl"
       />
