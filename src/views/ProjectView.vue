@@ -23,6 +23,10 @@ const api = ref(null)
 const showDescription = ref(true)
 const openProjectChat = inject('openProjectChat')
 const isMobile = computed(() => window.innerWidth <= 768)
+const currentSlideIndex = ref(0)
+
+// Add a computed property that returns the current project
+const currentProject = computed(() => projects[currentSlideIndex.value])
 
 const handleAskQuestion = (project) => {
   openProjectChat(project)
@@ -30,6 +34,11 @@ const handleAskQuestion = (project) => {
 
 const setApi = (val) => {
   api.value = val
+
+  // Add a change event listener to update the currentSlideIndex
+  api.value.on('select', () => {
+    currentSlideIndex.value = api.value.selectedScrollSnap()
+  })
 }
 
 onMounted(() => {
@@ -133,10 +142,7 @@ onMounted(() => {
     <!-- Teleported Mobile/Medium Buttons -->
     <Teleport to="#project-btn">
       <div v-if="isMobile" class="flex items-center justify-center gap-3 p-3 w-full">
-        <ProjectButtons
-          :project="projects[api?.selectedScrollSnap() ?? 0]"
-          @ask-question="handleAskQuestion"
-        />
+        <ProjectButtons :project="currentProject" @ask-question="handleAskQuestion" />
       </div>
     </Teleport>
   </div>
