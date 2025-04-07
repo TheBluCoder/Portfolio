@@ -7,16 +7,16 @@
       target="_blank"
       class="social-icon-link animate"
     >
-      <LinkedinIcon class="w-8 h-8" />
+      <LinkedinIcon class="w-6 h-6" />
     </a>
     <a href="mailto:oladeleikeoluwa508@gmail.com" class="social-icon-link animate">
-      <MailIcon class="w-8 h-8" />
+      <MailIcon class="w-6 h-6" />
     </a>
     <button
       @click="$emit('open-chat') && (hide_waving_icon = 'true')"
       class="social-icon-link animate"
     >
-      <MessageCircleIcon class="w-8 h-8" />
+      <MessageCircleIcon class="w-6 h-6" />
     </button>
     <a
       href="https://canary.discord.com/channels/@me"
@@ -34,7 +34,7 @@
       </div>
     </a>
     <a href="https://github.com/TheBluCoder" target="_blank" class="social-icon-link animate">
-      <GithubIcon class="w-8 h-8" />
+      <GithubIcon class="w-6 h-6" />
     </a>
 
     <div
