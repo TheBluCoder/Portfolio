@@ -1,6 +1,7 @@
 <template>
   <section
     class="min-h-screen w-full flex flex-col items-center justify-center bg-black p-8 gap-16"
+    :class="{ 'animate-slide-out': isNavigating }"
   >
     <!-- Typing Text Container -->
     <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] animate-slide-fade">
@@ -33,6 +34,17 @@
         <FolderCardReflection :folder="folder" :index="index" />
       </template>
     </div>
+
+    <!-- Down Arrow -->
+    <div class="absolute bottom-8 w-full flex justify-center">
+      <button
+        @click="handleFolderClick('about')"
+        class="text-white animate-bounce p-2 rounded-full hover:bg-white/10 transition-colors"
+        aria-label="Scroll to About section"
+      >
+        <chevron-down class="h-10 w-10"></chevron-down>
+      </button>
+    </div>
   </section>
 </template>
 
@@ -41,11 +53,13 @@ import { ref, onMounted } from 'vue'
 import { FolderIcon, BriefcaseIcon, ImageIcon } from 'lucide-vue-next'
 import FolderCard from '../components/FolderCard.vue'
 import FolderCardReflection from '../components/FolderCardReflection.vue'
+import { ChevronDown } from 'lucide-vue-next'
 const texts = ['<code/>', 'poems', 'melodies']
 const currentText = ref('')
 const currentIndex = ref(0)
 const isDeleting = ref(false)
 const typingElement = ref(null)
+const isNavigating = ref(false)
 
 const folders = [
   { name: 'Projects', icon: FolderIcon },
@@ -109,6 +123,10 @@ onMounted(() => {
   animation: slide-fade 0.5s ease forwards;
 }
 
+.animate-slide-out {
+  animation: slide-out 0.5s ease forwards;
+}
+
 @keyframes slide-fade {
   from {
     opacity: 0;
@@ -117,6 +135,17 @@ onMounted(() => {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
   }
 }
 </style>
