@@ -28,10 +28,10 @@ provide('openProjectChat', (project) => {
 
 <template>
   <div class="h-screen flex">
-    <div @click="isOpen = !isOpen" class="fixed top-12 left-2 md:top-6 md:left-4 z-50">
+    <div @click="isOpen = !isOpen" class="fixed top-6 left-2 md:left-4 z-50">
       <Component
         :is="isOpen ? XIcon : MenuIcon"
-        class="h-8 w-8 md:h-10 md:w-10 bg-gradient-to-br from-purple-900 to-black"
+        class="h-6 w-6 md:h-10 md:w-10 bg-gradient-to-br from-purple-900 to-black"
       />
     </div>
 
@@ -41,7 +41,6 @@ provide('openProjectChat', (project) => {
     <div class="flex-grow">
       <slot />
     </div>
-    <div id="project-btn" class="h-20 fixed bottom-40 bg-transparent w-full"></div>
 
     <!-- Chat overlay for mobile -->
     <div
@@ -52,6 +51,7 @@ provide('openProjectChat', (project) => {
 
     <!-- Chat component -->
     <ChatBox :is-open="isChatOpen" :project-context="chatProjectContext" @close="closeChat" />
+    <div id="project-btn" class="h-20 fixed bottom-20 bg-transparent w-full items-end"></div>
   </div>
 </template>
 

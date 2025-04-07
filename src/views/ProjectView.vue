@@ -109,7 +109,8 @@ onMounted(() => {
               />
               <!-- Project Buttons (shown on hover on desktop) -->
               <div
-                class="absolute inset-0 flex items-center justify-center bg-black/60 transition-all duration-300 hidden lg:flex lg:invisible group-hover:visible"
+                class="absolute inset-0 flex items-center justify-center bg-black/60 transition-opacity duration-300 ease-linear lg:flex lg:opacity-0 lg:group-hover:opacity-100 lg:pointer-events-none lg:group-hover:pointer-events-auto"
+                v-if="!isMobile"
               >
                 <ProjectButtons :project="project" @ask-question="handleAskQuestion" />
               </div>

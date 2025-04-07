@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed -bottom-1 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4 z-50"
+    class="fixed bottom-3 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4 z-50"
   >
     <a
       href="https://www.linkedin.com/in/ikeoluwa-oladele-15100820a/"
@@ -37,7 +37,10 @@
       <GithubIcon class="w-8 h-8" />
     </a>
 
-    <div class="w-14 h-14 fixed bottom-10 left-32" v-show="!hide_waving_icon && $route.name == 'home'">
+    <div
+      class="w-14 h-14 fixed bottom-10 left-32"
+      v-show="!hide_waving_icon && $route.name == 'home'"
+    >
       <a href="https://www.animatedimages.org/cat-waving-1645.htm"
         ><img
           src="https://www.animatedimages.org/data/media/1645/animated-waving-image-0072.gif"
