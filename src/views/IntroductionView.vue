@@ -4,9 +4,9 @@
     :class="{ 'animate-slide-out': isNavigating }"
   >
     <!-- Typing Text Container -->
-    <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] animate-slide-fade">
+    <div class="w-full max-w-[90vw] md:max-w-[80dvw] lg:max-w-[70dvw] animate-slide-fade">
       <div class="typing-container">
-        <h1 class="text-white text-2xl md:text-4xl lg:text-6xl mb-4 whitespace-nowrap">
+        <h1 class="text-white text-2xl md:text-3xl lg:text-5xl mb-4 whitespace-nowrap">
           Hi<a href="https://www.animatedimages.org/cat-waving-1645.htm"
             ><img
               src="https://www.animatedimages.org/data/media/1645/animated-waving-image-0064.gif"
@@ -25,7 +25,7 @@
 
     <!-- Folders Container -->
     <div
-      class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw]"
+      class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-[90vw] md:max-w-[80dvw] lg:max-w-[70dvw]"
     >
       <template v-for="(folder, index) in folders" :key="folder.name">
         <router-link :to="folder.name.toLowerCase()">

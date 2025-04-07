@@ -2,13 +2,7 @@
 import NavButton from './NavButton.vue'
 import router from '@/router'
 
-defineProps({
-  isOpen: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
-})
+const isOpen = defineModel('isOpen', { required: true, default: false })
 defineOptions({ name: 'NavbarComponent' })
 </script>
 
@@ -22,10 +16,10 @@ defineOptions({ name: 'NavbarComponent' })
         tabindex="0"
         class="group px-2 backdrop-blur-md bg-transparent h-full flex flex-col items-center justify-center gap-20 p-2 hover:text-blue-200/90 focus:text-blue-200/90 active:text-blue-200/90 transition-all duration-200 text-gray-400/40"
       >
-        <NavButton @click="router.push('/')">Home</NavButton>
-        <NavButton @click="router.push('/about')">About</NavButton>
-        <NavButton @click="router.push('/projects')">Projects</NavButton>
-        <NavButton @click="router.push('/resume')">Resume</NavButton>
+        <NavButton @click="router.push('/') && (isOpen = false)">Home</NavButton>
+        <NavButton @click="router.push('/about') && (isOpen = false)">About</NavButton>
+        <NavButton @click="router.push('/projects') && (isOpen = false)">Projects</NavButton>
+        <NavButton @click="router.push('/resume') && (isOpen = false)">Resume</NavButton>
       </nav>
     </div>
   </Transition>

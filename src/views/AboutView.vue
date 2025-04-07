@@ -2,7 +2,7 @@
   <section
     class="min-h-screen w-full flex flex-col lg:flex-row items-center justify-center bg-black p-8 md:gap-16 gap-8 m-4"
   >
-    <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] animate-slide-up">
+    <div class="w-full max-w-[90dvw] md:max-w-[80dvw] lg:max-w-[70dvw] animate-slide-up">
       <div class="about-container">
         <h1 class="text-gray-400/50 text-xl md:text-3xl lg:text-4xl mb-8">&lt;about /&gt;</h1>
 
@@ -35,7 +35,7 @@
           <li class="flex items-start">
             <span class="text-green-500 mr-2">▸</span>
             <span>I’m a perfectionist, and I struggle with imposter syndrome </span>
-            <span class="text-xs italic"> double homicide</span>
+            <span class="text-xs italic self-end"> double homicide</span>
           </li>
           <li class="flex items-start">
             <span class="text-green-500 mr-2">▸</span>
@@ -58,7 +58,7 @@
     </div>
 
     <div
-      class="image-container w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] flex justify-center animate-slide-up animation-delay-300"
+      class="image-container w-full max-w-[90dvw] md:max-w-[80dvw] lg:max-w-[70dvw] flex justify-center animate-slide-up animation-delay-300"
     >
       <img
         src="/public/portrait.jpg"

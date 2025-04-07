@@ -3,9 +3,8 @@
     id="home"
     class="min-h-screen w-full flex flex-col items-center justify-center bg-black p-8"
     tabindex="0"
-    @keyup.enter="$emit('switch-view', 'introduction')"
-    @keyUp.space="$emit('switch-view', 'introduction')"
-    focusable="true"
+    @click.stop="handleViewSwitch('introduction')"
+    @touchend="handleViewSwitch('introduction')"
     autofocus
   >
     <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw]">
@@ -40,16 +39,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import { POSITION } from 'vue-toastification'
 
 const emit = defineEmits(['switch-view'])
 const typingText = ref('bash hello_world.sh')
+const toast = useToast()
+let activeToast = null
+let toastShown = ref(false)
+
 const handleAnimationEnd = (event) => {
-  if (event.animationName === 'typing') {
-    const toast = useToast()
-    toast.info('Click ENTER to continue...', {
+  if (!toastShown.value && event.target.classList.contains('animate-typing')) {
+    activeToast = toast.info('Tap or press ENTER to continue...', {
       position: POSITION.BOTTOM_RIGHT,
       closeOnClick: true,
       pauseOnHover: true,
@@ -57,8 +59,34 @@ const handleAnimationEnd = (event) => {
       showCloseButtonOnHover: true,
       timeout: 5000,
     })
+    toastShown.value = true
   }
 }
+
+const handleKeyDown = (event) => {
+  if (event.key === 'Enter') {
+    handleViewSwitch('introduction')
+  }
+}
+
+const handleViewSwitch = (view) => {
+  if (activeToast) {
+    toast.dismiss(activeToast)
+    activeToast = null
+  }
+  emit('switch-view', view)
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+  if (activeToast) {
+    toast.dismiss(activeToast)
+  }
+})
 </script>
 <style>
 .typing-container {

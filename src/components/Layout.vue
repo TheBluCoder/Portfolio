@@ -36,7 +36,7 @@ provide('openProjectChat', (project) => {
     </div>
 
     <SocialMenu @open-chat="openGlobalChat" />
-    <Navbar :isOpen="isOpen" />
+    <Navbar v-model:isOpen="isOpen" />
     <div class="bg-gradient-to-r from-blue-200/20 to-black md:15 bg-blend-overlay"></div>
     <div class="flex-grow">
       <slot />
