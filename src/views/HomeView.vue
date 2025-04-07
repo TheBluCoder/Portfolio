@@ -123,4 +123,9 @@ onUnmounted(() => {
   backdrop-filter: blur(8px);
   color: green !important;
 }
+
+/* Remove outline on focused elements */
+#home:focus {
+  outline: none;
+}
 </style>
