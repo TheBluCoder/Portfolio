@@ -1,0 +1,23 @@
+[
+    {
+        "jobTitle": "IT support Coordinator",
+        "position": "Intern",
+        "company": "Taggart Group Of Companies",
+        "dateStart": "2024",
+        "dateEnd": "Present",
+        "tasks": [
+            "Resolved Over 350 service desk tickets that involved system administration, hardware troubleshooting and network troubleshooting. Making me the person with the thirdmost resolved tickets in the company currently",
+            "Built a chatbot prototype that uses mcp and is integrated with topdesk (the ticketing system) to assist the IT team with troubleshooting as well as make onboarding easier for new onboarded members"
+        ]
+    },
+    {
+        "jobTitle": "FullStack Developer",
+        "position": "Volunteer",
+        "company": "Family Hub Foundation",
+        "dateStart": "2025",
+        "dateEnd": "present",
+        "tasks": [
+            "Recently Joined Family Hub Foundation team as a volunteer for a fullStack Developer role."
+        ]
+    }
+]

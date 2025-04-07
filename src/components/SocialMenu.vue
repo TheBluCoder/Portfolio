@@ -2,13 +2,21 @@
   <div
     class="fixed -bottom-1 left-[50%] -translate-x-1/2 mt-6 flex items-center justify-center gap-4 z-50"
   >
-    <a href="https://linkedin.com" target="_blank" class="social-icon-link animate">
+    <a
+      href="https://www.linkedin.com/in/ikeoluwa-oladele-15100820a/"
+      target="_blank"
+      class="social-icon-link animate"
+    >
       <LinkedinIcon class="w-8 h-8" />
     </a>
-    <a href="mailto:contact@example.com" class="social-icon-link animate">
+    <a href="mailto:oladeleikeoluwa508@gmail.com" class="social-icon-link animate">
       <MailIcon class="w-8 h-8" />
     </a>
-    <a href="https://discord.com" target="_blank" class="social-icon-link animate">
+    <a
+      href="https://canary.discord.com/channels/@me"
+      target="_blank"
+      class="social-icon-link animate"
+    >
       <div class="w-8 h-8 flex items-center justify-center">
         <svg viewBox="0 -28.5 256 256" class="w-6 h-6">
           <path
@@ -27,7 +35,6 @@
 
 <script setup>
 import { LinkedinIcon, MailIcon, MessageCircleIcon } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
 
 defineEmits(['open-chat'])
 </script>

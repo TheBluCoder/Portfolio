@@ -1,0 +1,84 @@
+[
+    {
+        "category": "front-end",
+        "description": "Definitely not my forte, but when I do try, I try. Here is what I love to use:",
+        "technologies": [
+            {
+                "name": "VueJs",
+                "icon": "fa-brands fa-vuejs"
+            },
+            {
+                "name": "ShadCn-vue",
+                "icon": "fa-solid fa-palette"
+            },
+            {
+                "name": "Tailwind CSS",
+                "icon": "fa-brands fa-css3-alt"
+            }
+        ]
+    },
+    {
+        "category": "languages",
+        "description": "I am familiar with these programming languages:",
+        "technologies": [
+            {
+                "name": "Python",
+                "icon": "fa-brands fa-python"
+            },
+            {
+                "name": "C",
+                "icon": "fa-solid fa-code"
+            },
+            {
+                "name": "Solidity",
+                "icon": "fa-brands fa-ethereum"
+            },
+            {
+                "name": "SQL",
+                "icon": "fa-solid fa-database"
+            },
+            {
+                "name": "Bash",
+                "icon": "fa-solid fa-terminal"
+            },
+            {
+                "name": "Java",
+                "icon": "fa-brands fa-java"
+            },
+            {
+                "name": "Php/Laravel",
+                "icon": "fa-brands fa-php"
+            },
+            {
+                "name": "JavaScript",
+                "icon": "fa-brands fa-js"
+            },
+            {
+                "name": "HTML/CSS",
+                "icon": "fa-brands fa-html5"
+            }
+        ]
+    },
+    {
+        "category": "Artificial Intelligence",
+        "description": "I have experiencing setting up my own Agent and MCP server",
+        "technologies": [
+            {
+                "name": "FastMcp",
+                "icon": "fa-solid fa-bolt"
+            },
+            {
+                "name": "LangChain",
+                "icon": "fa-solid fa-link"
+            },
+            {
+                "name": "Pytorch",
+                "icon": "fa-solid fa-fire"
+            },
+            {
+                "name": "PyTorch",
+                "icon": "fa-solid fa-fire"
+            }
+        ]
+    }
+]
