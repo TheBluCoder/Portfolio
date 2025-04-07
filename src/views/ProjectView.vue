@@ -91,13 +91,13 @@ onMounted(() => {
 <template>
   <div class="h-full w-full">
     <div
-      class="h-full place-content-center place-items-center w-[85%] mx-auto"
+      class="h-full place-content-center place-items-center w-full mx-auto"
       @mouseenter="set_focus('carousel')"
       @mouseleave="remove_focus('carousel')"
     >
       <Carousel
         id="carousel"
-        class="group relative w-full max-w-xs md:max-w-full md:focus:max-w-[76%] duration-500 focus:outline-none"
+        class="group relative w-full max-w-xs md:max-w-[75%] md:focus:max-w-[70%] duration-500 focus:outline-none"
         :plugins="[plugin]"
         @focus="show_description = true"
         @blur="show_description = false"

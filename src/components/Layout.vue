@@ -28,10 +28,10 @@ provide('openProjectChat', (project) => {
 
 <template>
   <div class="h-screen flex">
-    <div @click="isOpen = !isOpen" class="fixed top-6 left-6 z-50">
+    <div @click="isOpen = !isOpen" class="fixed top-12 left-2 md:top-6 md:left-4 z-50">
       <Component
         :is="isOpen ? XIcon : MenuIcon"
-        class="h-10 w-10 bg-gradient-to-br from-purple-900 to-black"
+        class="h-8 w-8 md:h-10 md:w-10 bg-gradient-to-br from-purple-900 to-black"
       />
     </div>
 

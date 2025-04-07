@@ -3,8 +3,8 @@ import techStackData from '@/data/techstack.json'
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto mb-16 fade-in-section">
-    <h3 class="text-4xl font-bold mb-10 text-gray-600">&lt;/Tech stack!&gt;</h3>
+  <div class="max-w-7xl mx-auto my-12 fade-in-section">
+    <h3 class="text-2xl md:text-4xl font-bold mb-4 text-gray-600">&lt;/Tech stack!&gt;</h3>
     <hr class="border-gray-700 mb-10" />
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-16">

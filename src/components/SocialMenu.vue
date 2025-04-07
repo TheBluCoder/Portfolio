@@ -12,6 +12,12 @@
     <a href="mailto:oladeleikeoluwa508@gmail.com" class="social-icon-link animate">
       <MailIcon class="w-8 h-8" />
     </a>
+    <button
+      @click="$emit('open-chat') && (hide_waving_icon = 'true')"
+      class="social-icon-link animate"
+    >
+      <MessageCircleIcon class="w-8 h-8" />
+    </button>
     <a
       href="https://canary.discord.com/channels/@me"
       target="_blank"
@@ -27,16 +33,27 @@
         </svg>
       </div>
     </a>
-    <button @click="$emit('open-chat')" class="social-icon-link animate">
-      <MessageCircleIcon class="w-8 h-8" />
-    </button>
+    <a href="https://github.com/TheBluCoder" target="_blank" class="social-icon-link animate">
+      <GithubIcon class="w-8 h-8" />
+    </a>
+
+    <div class="w-14 h-14 fixed bottom-10 left-32" v-show="!hide_waving_icon && $route.name == 'home'">
+      <a href="https://www.animatedimages.org/cat-waving-1645.htm"
+        ><img
+          src="https://www.animatedimages.org/data/media/1645/animated-waving-image-0072.gif"
+          border="0"
+          alt="animated-waving-image-0072"
+      /></a>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { LinkedinIcon, MailIcon, MessageCircleIcon } from 'lucide-vue-next'
+import { LinkedinIcon, MailIcon, MessageCircleIcon, GithubIcon } from 'lucide-vue-next'
+import { ref } from 'vue'
 
 defineEmits(['open-chat'])
+const hide_waving_icon = ref(false)
 </script>
 
 <style scoped>
@@ -72,6 +89,9 @@ defineEmits(['open-chat'])
 }
 .social-icon-link:nth-child(4) {
   --i: 4;
+}
+.social-icon-link:nth-child(5) {
+  --i: 5;
 }
 
 .social-icon-link:hover {
