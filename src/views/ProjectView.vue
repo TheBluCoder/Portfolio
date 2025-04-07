@@ -81,7 +81,7 @@ onMounted(() => {
 }
 
 .carousel-container {
-  @apply relative w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl mx-auto;
+  @apply relative w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-3xl mx-auto;
 }
 
 .carousel-navigation {
@@ -118,7 +118,7 @@ onMounted(() => {
             <!-- Project Info -->
             <div v-if="showDescription || isMobile">
               <h3 class="project-title">{{ project.name }}</h3>
-              <div class="project-description" v-html="project.description"></div>
+              <div class="project-description text-base" v-html="project.description"></div>
             </div>
           </div>
         </CarouselItem>
