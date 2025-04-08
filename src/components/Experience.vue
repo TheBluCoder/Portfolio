@@ -16,6 +16,10 @@ defineProps({
       <h1 class="text-4xl font-bold mr-1">Experience</h1>
       <a
         :href="resumeUrl"
+        type="application/pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        download="Ikeoluwa_Oladele_Resume_SWE.pdf"
         class="bg-blue-900 hover:bg-blue-800 text-white py-2 px-4 rounded-md flex items-center transition-colors"
       >
         <DownloadIcon class="mr-2 h-5 w-5" />

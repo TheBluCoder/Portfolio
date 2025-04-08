@@ -29,3 +29,6 @@ coverage
 
 *.tsbuildinfo
 .vscode/
+
+# Environment variables
+.env
