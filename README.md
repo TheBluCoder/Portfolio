@@ -77,19 +77,22 @@ This project includes a FastAPI backend to interact with Google's Gemini AI mode
 ### Backend API Endpoints
 
 - `GET /`: Health check endpoint
-- `POST /api/chat`: Chat with Gemini AI
+- `POST /api/chat`: Chat with Gemini AI, using conversation history as context.
   - Request body:
     ```json
     {
-      "message": "Your message here",
-      "context": "Optional project context"
+      "context": [
+        { "type": "human", "content": "Your first message" },
+        { "type": "ai", "content": "AI's first response" },
+        { "type": "human", "content": "Your second message" }
+      ]
     }
     ```
-  - Response:
+  - Response (Structure might vary based on `Bot.generate_response` implementation):
     ```json
     {
-      "success": true,
-      "response": "AI response here"
+      "success": true, // Example field
+      "response": "AI response here" // Example field
     }
     ```
 
