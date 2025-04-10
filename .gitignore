@@ -32,3 +32,8 @@ coverage
 
 # Environment variables
 .env
+/venv
+*.bat
+*.sh
+*.pyc
+__pycache__/
