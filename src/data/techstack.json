@@ -80,5 +80,39 @@
                 "icon": "fa-solid fa-fire"
             }
         ]
+    },
+    {
+        "category": "DevOps",
+        "description": "Experienced with cloud platforms, containerization, and CI/CD:",
+        "technologies": [
+            {
+                "name": "Cloudflare",
+                "icon": "fa-solid fa-cloud"
+            },
+            {
+                "name": "Nginx",
+                "icon": "fa-solid fa-server"
+            },
+            {
+                "name": "Azure Functions",
+                "icon": "fa-solid fa-bolt-lightning"
+            },
+            {
+                "name": "AWS EC2",
+                "icon": "fa-brands fa-aws"
+            },
+            {
+                "name": "Docker",
+                "icon": "fa-brands fa-docker"
+            },
+            {
+                "name": "Kubernetes",
+                "icon": "fa-solid fa-dharmachakra"
+            },
+            {
+                "name": "Git Workflows",
+                "icon": "fa-solid fa-code-branch"
+            }
+        ]
     }
 ]
