@@ -4,10 +4,11 @@
         "position": "Intern",
         "company": "Taggart Group Of Companies",
         "dateStart": "2024",
-        "dateEnd": "Present",
+        "dateEnd": "May 2025",
         "tasks": [
-            "Resolved Over 350 service desk tickets that involved system administration, hardware troubleshooting and network troubleshooting. Making me the person with the thirdmost resolved tickets in the company currently",
-            "Built a chatbot prototype that uses mcp and is integrated with topdesk (the ticketing system) to assist the IT team with troubleshooting as well as make onboarding easier for new onboarded members"
+            "Provided comprehensive IT support within a Microsoft environment, resolving over 350+ service tickets including system administration, hardware issues, and network troubleshooting.",
+            "Gained practical experience with enterprise IT systems and tools, including Active Directory and TOPdesk.",
+            "Proposed and developed an internal chatbot prototype that uses mcp and rag to assist the IT team with knowledge base item retrieval with the sole aim of making onboarding easier for new onboarded members"
         ]
     },
     {
