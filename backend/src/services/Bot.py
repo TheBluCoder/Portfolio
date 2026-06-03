@@ -11,6 +11,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from src.models.schemas import Message
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall, ToolMessage 
 from src.services.WebSearcher import WebSearcher
+from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGate
 
 
 logger = setup_logging(__file__)
@@ -46,7 +47,7 @@ async def query_vector_db(query: str, index_name: str) -> str:
 async def query_about_me(query: str) -> str:
     """Queries the vector database for information about me(ikeoluwa)."""
     pc = PineconeService()
-    return pc.query_similar("aboutme", query)
+    return await pc.query_similar("aboutme", query)
     
 @tool
 async def list_indexes() -> str:
@@ -97,7 +98,7 @@ async def handle_langchain_tool_call(tool_call: ToolCall) -> ToolMessage:
     logger.info(f"Executing LangChain tool: {tool_name} with args: {args}")
 
     # Find the corresponding LangChain tool function
-    available_tools = {"query_vector_db": query_vector_db, "google_search_retrieval_tool": google_search_retrieval_tool}
+    available_tools = {"query_vector_db": query_vector_db, "query_about_me": query_about_me}
 
     if tool_name in available_tools:
         try:
@@ -116,6 +117,13 @@ async def handle_langchain_tool_call(tool_call: ToolCall) -> ToolMessage:
 
 
 async def generate_response(context: Optional[List[Message]] = None) -> str:
+    latest_question = next(
+        (msg.content for msg in reversed(context or []) if msg.type == "human"),
+        "",
+    )
+    if not TopicGate().is_on_topic(latest_question):
+        return OFF_TOPIC_RESPONSE
+
     messages: List[SystemMessage | HumanMessage | AIMessage | ToolMessage] = [ # Type hint for clarity
         SystemMessage(content=SYSTEM_PROMPT),
         # Add formatted context history BEFORE the current prompt
@@ -127,7 +135,7 @@ async def generate_response(context: Optional[List[Message]] = None) -> str:
     try:
         # Bind the *LangChain* tool(s) for explicit function calling
         # The grounding tool is already configured in the LLM constructor
-        langchain_tools = [query_vector_db, google_search_retrieval_tool]
+        langchain_tools = [query_about_me, query_vector_db]
         llm_w_langchain_tools = llm.bind_tools(langchain_tools) # Only bind LangChain tools here
 
         # Initial invocation
