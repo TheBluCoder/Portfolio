@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.routes import chat, indexes, health, projects
+from src.routes import chat, indexes, health, projects, gallery
 from src.services.pinecone_service import PineconeService
 from contextlib import asynccontextmanager
 
@@ -41,4 +41,5 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api")
 app.include_router(indexes.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
+app.include_router(gallery.router, prefix="/api")
 app.include_router(health.router)

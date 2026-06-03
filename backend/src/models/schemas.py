@@ -32,3 +32,16 @@ class DeleteIndexResponse(BaseModel):
     message: str
     deleted_index: str
     timestamp: datetime 
+
+class PoemCreate(BaseModel):
+    title: str
+    body: str
+    excerpt: str | None = None
+    tags: list[str] = []
+
+class CommentCreate(BaseModel):
+    author: str
+    body: str
+
+class CommentModeration(BaseModel):
+    approved: bool

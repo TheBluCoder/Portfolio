@@ -19,6 +19,7 @@ defineOptions({ name: 'NavbarComponent' })
         <NavButton @click="router.push('/') && (isOpen = false)">Home</NavButton>
         <NavButton @click="router.push('/about') && (isOpen = false)">About</NavButton>
         <NavButton @click="router.push('/projects') && (isOpen = false)">Projects</NavButton>
+        <NavButton @click="router.push('/gallery') && (isOpen = false)">Gallery</NavButton>
         <NavButton @click="router.push('/resume') && (isOpen = false)">Resume</NavButton>
       </nav>
     </div>
