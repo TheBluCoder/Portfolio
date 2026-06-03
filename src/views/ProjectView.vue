@@ -1,5 +1,5 @@
 <script setup>
-import projects from '@/data/projects.json'
+import fallbackProjects from '@/data/projects.json'
 import {
   Carousel,
   CarouselContent,
@@ -24,9 +24,10 @@ const showDescription = ref(true)
 const openProjectChat = inject('openProjectChat')
 const isMobile = computed(() => window.innerWidth <= 768)
 const currentSlideIndex = ref(0)
+const projects = ref(fallbackProjects)
 
 // Add a computed property that returns the current project
-const currentProject = computed(() => projects[currentSlideIndex.value])
+const currentProject = computed(() => projects.value[currentSlideIndex.value])
 
 const handleAskQuestion = (project) => {
   openProjectChat(project)
@@ -49,7 +50,22 @@ onMounted(() => {
 
   // Set initial state
   showDescription.value = !isMobile.value
+  loadProjects()
 })
+
+const loadProjects = async () => {
+  const projectsUrl = import.meta.env.VITE_PROJECTS_URL || '/api/projects'
+  try {
+    const response = await fetch(projectsUrl)
+    if (!response.ok) throw new Error(`Project API responded with ${response.status}`)
+    const data = await response.json()
+    if (Array.isArray(data.projects) && data.projects.length > 0) {
+      projects.value = data.projects
+    }
+  } catch (error) {
+    console.warn('Using fallback projects:', error)
+  }
+}
 </script>
 
 <style scoped>

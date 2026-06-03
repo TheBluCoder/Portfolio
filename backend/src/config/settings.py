@@ -11,6 +11,10 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GPSE_API_KEY = os.getenv("GPSE_API_KEY")
 CX = os.getenv("CX")
+GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "TheBluCoder")
+GITHUB_PROJECT_TOPIC = os.getenv("GITHUB_PROJECT_TOPIC", "portfolio")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
 
 PINECONE_SPEC = ServerlessSpec(
     cloud="aws",
