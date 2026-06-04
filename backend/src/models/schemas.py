@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Literal
 from datetime import datetime, timezone
 
 def utc_now() -> datetime:
@@ -37,7 +37,7 @@ class PoemCreate(BaseModel):
     title: str
     body: str
     excerpt: str | None = None
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 class CommentCreate(BaseModel):
     author: str
@@ -45,3 +45,21 @@ class CommentCreate(BaseModel):
 
 class CommentModeration(BaseModel):
     approved: bool
+
+class PoemComment(BaseModel):
+    id: str
+    poem_id: str
+    author: str
+    body: str
+    approved: bool = False
+    created_at: str | None = None
+
+class Poem(BaseModel):
+    id: str
+    title: str
+    body: str
+    excerpt: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    likes: int = 0
+    created_at: str | None = None
+    comments: list[PoemComment] = Field(default_factory=list)

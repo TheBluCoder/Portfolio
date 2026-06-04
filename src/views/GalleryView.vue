@@ -24,7 +24,7 @@ async function loadPoems() {
   const response = await fetch(`${apiBase}/api/gallery/poems`)
   if (!response.ok) return
   const data = await response.json()
-  poems.value = data.poems || []
+  poems.value = Array.isArray(data) ? data : data.poems || []
   poems.value.forEach((poem) => {
     if (!commentForms.value[poem.id]) {
       commentForms.value[poem.id] = { author: '', body: '' }

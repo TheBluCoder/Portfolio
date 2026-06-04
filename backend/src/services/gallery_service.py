@@ -3,6 +3,7 @@ from typing import Any
 from uuid import uuid4
 
 from src.config.settings import AZURE_TABLE_CONNECTION_STRING
+from src.models.schemas import Poem, PoemComment
 
 try:
     from azure.data.tables import TableServiceClient, UpdateMode
@@ -22,7 +23,7 @@ class GalleryService:
         self._comments = None
         self._likes = None
 
-    def list_poems(self) -> list[dict[str, Any]]:
+    def list_poems(self) -> list[Poem]:
         if self._use_memory:
             poems = list(self._memory_poems.values())
             return [self._with_approved_comments(poem.copy()) for poem in poems]
@@ -36,7 +37,7 @@ class GalleryService:
         body: str,
         excerpt: str | None,
         tags: list[str],
-    ) -> dict[str, Any]:
+    ) -> Poem:
         now = self._now()
         poem = {
             "PartitionKey": "poem",
@@ -56,7 +57,7 @@ class GalleryService:
 
         return self._serialize_poem(poem)
 
-    def like_poem(self, poem_id: str, visitor_key: str) -> dict[str, Any]:
+    def like_poem(self, poem_id: str, visitor_key: str) -> Poem:
         like_id = f"{poem_id}:{visitor_key}"
         if self._use_memory:
             poem = self._memory_poems[poem_id]
@@ -81,7 +82,7 @@ class GalleryService:
         author: str,
         body: str,
         visitor_key: str,
-    ) -> dict[str, Any]:
+    ) -> PoemComment:
         comment = {
             "PartitionKey": "comment",
             "RowKey": uuid4().hex,
@@ -100,7 +101,7 @@ class GalleryService:
 
         return self._serialize_comment(comment)
 
-    def list_pending_comments(self) -> list[dict[str, Any]]:
+    def list_pending_comments(self) -> list[PoemComment]:
         if self._use_memory:
             return [
                 self._serialize_comment(comment)
@@ -113,7 +114,7 @@ class GalleryService:
         )
         return [self._serialize_comment(dict(comment)) for comment in comments]
 
-    def moderate_comment(self, comment_id: str, approved: bool) -> dict[str, Any]:
+    def moderate_comment(self, comment_id: str, approved: bool) -> PoemComment:
         if self._use_memory:
             comment = self._memory_comments[comment_id]
             comment["approved"] = approved
@@ -124,7 +125,7 @@ class GalleryService:
         self._comments_table.upsert_entity(comment, mode=UpdateMode.MERGE)
         return self._serialize_comment(dict(comment))
 
-    def _with_approved_comments(self, poem: dict[str, Any]) -> dict[str, Any]:
+    def _with_approved_comments(self, poem: dict[str, Any]) -> Poem:
         poem_id = poem["RowKey"]
         if self._use_memory:
             comments = [
@@ -139,29 +140,28 @@ class GalleryService:
             comments = [self._serialize_comment(dict(comment)) for comment in comments]
 
         serialized = self._serialize_poem(poem)
-        serialized["comments"] = comments
-        return serialized
+        return serialized.model_copy(update={"comments": comments})
 
-    def _serialize_poem(self, poem: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "id": poem["RowKey"],
-            "title": poem["title"],
-            "body": poem["body"],
-            "excerpt": poem.get("excerpt"),
-            "tags": [tag for tag in poem.get("tags", "").split(",") if tag],
-            "likes": poem.get("likes", 0),
-            "created_at": poem.get("created_at"),
-        }
+    def _serialize_poem(self, poem: dict[str, Any]) -> Poem:
+        return Poem(
+            id=poem["RowKey"],
+            title=poem["title"],
+            body=poem["body"],
+            excerpt=poem.get("excerpt"),
+            tags=[tag for tag in poem.get("tags", "").split(",") if tag],
+            likes=poem.get("likes", 0),
+            created_at=poem.get("created_at"),
+        )
 
-    def _serialize_comment(self, comment: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "id": comment["RowKey"],
-            "poem_id": comment["poem_id"],
-            "author": comment["author"],
-            "body": comment["body"],
-            "approved": comment.get("approved", False),
-            "created_at": comment.get("created_at"),
-        }
+    def _serialize_comment(self, comment: dict[str, Any]) -> PoemComment:
+        return PoemComment(
+            id=comment["RowKey"],
+            poem_id=comment["poem_id"],
+            author=comment["author"],
+            body=comment["body"],
+            approved=comment.get("approved", False),
+            created_at=comment.get("created_at"),
+        )
 
     @property
     def _use_memory(self) -> bool:

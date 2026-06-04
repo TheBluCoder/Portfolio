@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Header, HTTPException, Request
-from typing import Any
 
 from src.config.settings import ADMIN_API_KEY
-from src.models.schemas import CommentCreate, CommentModeration, PoemCreate
+from src.models.schemas import CommentCreate, CommentModeration, Poem, PoemComment, PoemCreate
 from src.services.gallery_service import GalleryService
 from src.services.rate_limiter import RateLimitExceeded, RateLimiter
 
@@ -10,21 +9,21 @@ router = APIRouter()
 
 
 @router.get("/gallery/poems")
-async def list_poems() -> dict[str, list[dict[str, Any]]]:
-    return {"poems": GalleryService().list_poems()}
+async def list_poems() -> list[Poem]:
+    return GalleryService().list_poems()
 
 
 @router.post("/gallery/poems")
 async def create_poem(
     poem: PoemCreate,
     x_admin_key: str = Header(default=""),
-) -> dict[str, Any]:
+) -> Poem:
     _require_admin(x_admin_key)
     return GalleryService().create_poem(poem.title, poem.body, poem.excerpt, poem.tags)
 
 
 @router.post("/gallery/poems/{poem_id}/like")
-async def like_poem(poem_id: str, request: Request) -> dict[str, Any]:
+async def like_poem(poem_id: str, request: Request) -> Poem:
     visitor_key = _visitor_key(request)
     return GalleryService().like_poem(poem_id, visitor_key)
 
@@ -34,7 +33,7 @@ async def add_comment(
     poem_id: str,
     comment: CommentCreate,
     request: Request,
-) -> dict[str, Any]:
+) -> PoemComment:
     visitor_key = _visitor_key(request)
     try:
         RateLimiter(table_name="GalleryCommentLimits", max_requests=4).check(visitor_key)
@@ -46,9 +45,9 @@ async def add_comment(
 @router.get("/admin/comments/pending")
 async def pending_comments(
     x_admin_key: str = Header(default=""),
-) -> dict[str, list[dict[str, Any]]]:
+) -> list[PoemComment]:
     _require_admin(x_admin_key)
-    return {"comments": GalleryService().list_pending_comments()}
+    return GalleryService().list_pending_comments()
 
 
 @router.patch("/admin/comments/{comment_id}")
@@ -56,7 +55,7 @@ async def moderate_comment(
     comment_id: str,
     moderation: CommentModeration,
     x_admin_key: str = Header(default=""),
-) -> dict[str, Any]:
+) -> PoemComment:
     _require_admin(x_admin_key)
     return GalleryService().moderate_comment(comment_id, moderation.approved)
 
