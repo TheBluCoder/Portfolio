@@ -6,9 +6,9 @@ from src.config.settings import GOOGLE_API_KEY, GEMINI_MODEL, PORTFOLIO_CONTEXT_
 from src.config.log_config import setup_logging
 from src.config.prompts import SYSTEM_PROMPT
 from src.services.pinecone_service import PineconeService 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from google import genai
+from google.genai import types
 from src.models.schemas import Message
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGate
 
 
@@ -17,24 +17,23 @@ dotenv.load_dotenv() # Load environment variables early
 
 # --- LLM Configuration ---
 
-# Configure the LLM, passing the *Vertex AI* grounding tool to the constructor
-llm = ChatGoogleGenerativeAI(
-    model=GEMINI_MODEL or "gemini-pro", # Using gemini-pro as flash might have limitations
-    google_api_key=GOOGLE_API_KEY,
+client = genai.Client(api_key=GOOGLE_API_KEY)
+generation_config = types.GenerateContentConfig(
+    system_instruction=SYSTEM_PROMPT,
     temperature=0.5,
     top_p=0.3,
 )
 
 # --- Core Logic ---
 
-async def format_context(context: list[Message] | None) -> list[HumanMessage | AIMessage]:
-    formatted_context: list[HumanMessage | AIMessage] = []
+def format_context(context: list[Message] | None) -> str:
+    formatted_context: list[str] = []
     for msg in context or []:
         if msg.type == "human":
-            formatted_context.append(HumanMessage(content=msg.content))
+            formatted_context.append(f"User: {msg.content}")
         elif msg.type == "ai":
-             formatted_context.append(AIMessage(content=msg.content))
-    return formatted_context
+            formatted_context.append(f"Assistant: {msg.content}")
+    return "\n".join(formatted_context)
 
 async def generate_response(context: list[Message] | None = None) -> str:
     latest_question = next(
@@ -46,17 +45,16 @@ async def generate_response(context: list[Message] | None = None) -> str:
         return OFF_TOPIC_RESPONSE
 
     retrieved_context = await retrieve_context(latest_question)
-    messages: list[SystemMessage | HumanMessage | AIMessage] = [
-        SystemMessage(content=SYSTEM_PROMPT),
-        SystemMessage(content=build_context_prompt(retrieved_context)),
-    ]
-    formatted_msg = await format_context(context)
-    messages.extend(formatted_msg)
+    prompt = build_generation_prompt(retrieved_context, context)
 
     try:
-        response: AIMessage = llm.invoke(messages)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL or "gemini-pro",
+            contents=prompt,
+            config=generation_config,
+        )
         logger.info("LLM response generated after deterministic retrieval.")
-        return response.content if response.content else "No content in response."
+        return response.text if response.text else "No content in response."
 
     except Exception as e:
         logger.error(f"Error during generation or tool handling: {e}", exc_info=True) # Log traceback
@@ -75,12 +73,16 @@ async def retrieve_context(question: str) -> dict[str, Any]:
     return context
 
 
-def build_context_prompt(retrieved_context: dict[str, Any]) -> str:
+def build_generation_prompt(
+    retrieved_context: dict[str, Any],
+    conversation: list[Message] | None,
+) -> str:
     return (
         "Use only the retrieved portfolio context below to answer. "
         "If the context does not contain enough detail, say what is known from the portfolio "
         "and avoid inventing facts.\n\n"
-        f"{compact_context(retrieved_context)}"
+        f"Retrieved portfolio context:\n{compact_context(retrieved_context)}\n\n"
+        f"Conversation:\n{format_context(conversation)}"
     )
 
 
