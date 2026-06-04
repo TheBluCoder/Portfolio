@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Header, HTTPException, Request
 
 from src.config.settings import ADMIN_API_KEY
-from src.models.schemas import CommentCreate, CommentModeration, Poem, PoemComment, PoemCreate
+from src.models.schemas import Comment, CommentCreate, CommentModeration, Like, Poem, PoemCreate
 from src.services.gallery_service import GalleryService
 from src.services.rate_limiter import RateLimitExceeded, RateLimiter
 
@@ -23,7 +23,7 @@ async def create_poem(
 
 
 @router.post("/gallery/poems/{poem_id}/like")
-async def like_poem(poem_id: str, request: Request) -> Poem:
+async def like_poem(poem_id: str, request: Request) -> Like:
     visitor_key = _visitor_key(request)
     return GalleryService().like_poem(poem_id, visitor_key)
 
@@ -33,7 +33,7 @@ async def add_comment(
     poem_id: str,
     comment: CommentCreate,
     request: Request,
-) -> PoemComment:
+) -> Comment:
     visitor_key = _visitor_key(request)
     try:
         RateLimiter(table_name="GalleryCommentLimits", max_requests=4).check(visitor_key)
@@ -45,7 +45,7 @@ async def add_comment(
 @router.get("/admin/comments/pending")
 async def pending_comments(
     x_admin_key: str = Header(default=""),
-) -> list[PoemComment]:
+) -> list[Comment]:
     _require_admin(x_admin_key)
     return GalleryService().list_pending_comments()
 
@@ -55,7 +55,7 @@ async def moderate_comment(
     comment_id: str,
     moderation: CommentModeration,
     x_admin_key: str = Header(default=""),
-) -> PoemComment:
+) -> Comment:
     _require_admin(x_admin_key)
     return GalleryService().moderate_comment(comment_id, moderation.approved)
 

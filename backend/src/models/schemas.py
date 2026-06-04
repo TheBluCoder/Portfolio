@@ -46,12 +46,19 @@ class CommentCreate(BaseModel):
 class CommentModeration(BaseModel):
     approved: bool
 
-class PoemComment(BaseModel):
+class Comment(BaseModel):
     id: str
     poem_id: str
     author: str
     body: str
     approved: bool = False
+    created_at: str | None = None
+
+class Like(BaseModel):
+    id: str
+    poem_id: str
+    likes: int
+    liked: bool = True
     created_at: str | None = None
 
 class Poem(BaseModel):
@@ -62,4 +69,4 @@ class Poem(BaseModel):
     tags: list[str] = Field(default_factory=list)
     likes: int = 0
     created_at: str | None = None
-    comments: list[PoemComment] = Field(default_factory=list)
+    comments: list[Comment] = Field(default_factory=list)

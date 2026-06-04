@@ -28,7 +28,9 @@ class GalleryServiceTests(unittest.TestCase):
         second = service.like_poem(poem.id, "visitor")
 
         self.assertEqual(first.likes, 1)
+        self.assertTrue(first.liked)
         self.assertEqual(second.likes, 1)
+        self.assertFalse(second.liked)
 
 
 if __name__ == "__main__":

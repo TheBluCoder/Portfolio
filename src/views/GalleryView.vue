@@ -63,8 +63,10 @@ async function likePoem(poem) {
     method: 'POST',
   })
   if (!response.ok) return
-  const updated = await response.json()
-  poems.value = poems.value.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
+  const like = await response.json()
+  poems.value = poems.value.map((item) =>
+    item.id === like.poem_id ? { ...item, likes: like.likes } : item,
+  )
 }
 
 async function submitComment(poem) {

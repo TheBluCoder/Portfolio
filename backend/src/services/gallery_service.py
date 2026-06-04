@@ -3,7 +3,7 @@ from typing import Any
 from uuid import uuid4
 
 from src.config.settings import AZURE_TABLE_CONNECTION_STRING
-from src.models.schemas import Poem, PoemComment
+from src.models.schemas import Comment, Like, Poem
 
 try:
     from azure.data.tables import TableServiceClient, UpdateMode
@@ -57,24 +57,33 @@ class GalleryService:
 
         return self._serialize_poem(poem)
 
-    def like_poem(self, poem_id: str, visitor_key: str) -> Poem:
+    def like_poem(self, poem_id: str, visitor_key: str) -> Like:
         like_id = f"{poem_id}:{visitor_key}"
+        liked = False
+        created_at = self._now()
         if self._use_memory:
             poem = self._memory_poems[poem_id]
             if like_id not in self._memory_likes:
                 self._memory_likes.add(like_id)
                 poem["likes"] = poem.get("likes", 0) + 1
-            return self._serialize_poem(poem)
+                liked = True
+            return self._serialize_like(like_id, poem_id, poem.get("likes", 0), liked, created_at)
 
-        like = {"PartitionKey": "like", "RowKey": like_id, "poem_id": poem_id}
+        like = {
+            "PartitionKey": "like",
+            "RowKey": like_id,
+            "poem_id": poem_id,
+            "created_at": created_at,
+        }
         try:
             self._likes_table.create_entity(like)
             poem = self._poems_table.get_entity("poem", poem_id)
             poem["likes"] = poem.get("likes", 0) + 1
             self._poems_table.upsert_entity(poem, mode=UpdateMode.MERGE)
+            liked = True
         except Exception:
             poem = self._poems_table.get_entity("poem", poem_id)
-        return self._serialize_poem(dict(poem))
+        return self._serialize_like(like_id, poem_id, poem.get("likes", 0), liked, created_at)
 
     def add_comment(
         self,
@@ -82,7 +91,7 @@ class GalleryService:
         author: str,
         body: str,
         visitor_key: str,
-    ) -> PoemComment:
+    ) -> Comment:
         comment = {
             "PartitionKey": "comment",
             "RowKey": uuid4().hex,
@@ -101,7 +110,7 @@ class GalleryService:
 
         return self._serialize_comment(comment)
 
-    def list_pending_comments(self) -> list[PoemComment]:
+    def list_pending_comments(self) -> list[Comment]:
         if self._use_memory:
             return [
                 self._serialize_comment(comment)
@@ -114,7 +123,7 @@ class GalleryService:
         )
         return [self._serialize_comment(dict(comment)) for comment in comments]
 
-    def moderate_comment(self, comment_id: str, approved: bool) -> PoemComment:
+    def moderate_comment(self, comment_id: str, approved: bool) -> Comment:
         if self._use_memory:
             comment = self._memory_comments[comment_id]
             comment["approved"] = approved
@@ -153,14 +162,30 @@ class GalleryService:
             created_at=poem.get("created_at"),
         )
 
-    def _serialize_comment(self, comment: dict[str, Any]) -> PoemComment:
-        return PoemComment(
+    def _serialize_comment(self, comment: dict[str, Any]) -> Comment:
+        return Comment(
             id=comment["RowKey"],
             poem_id=comment["poem_id"],
             author=comment["author"],
             body=comment["body"],
             approved=comment.get("approved", False),
             created_at=comment.get("created_at"),
+        )
+
+    def _serialize_like(
+        self,
+        like_id: str,
+        poem_id: str,
+        likes: int,
+        liked: bool,
+        created_at: str | None,
+    ) -> Like:
+        return Like(
+            id=like_id,
+            poem_id=poem_id,
+            likes=likes,
+            liked=liked,
+            created_at=created_at,
         )
 
     @property
