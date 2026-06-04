@@ -32,7 +32,10 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             patch("src.services.Bot.TopicGate") as topic_gate,
-            patch("src.services.Bot.retrieve_context", new=AsyncMock(return_value={"aboutme": "ctx"})),
+            patch(
+                "src.services.Bot.retrieve_context",
+                new=AsyncMock(return_value={"index": "aboutme", "results": "ctx"}),
+            ),
             patch("src.services.Bot.llm", Mock(invoke=Mock(return_value=AIMessage(content="Answer")))) as llm,
         ):
             topic_gate.return_value.check = AsyncMock(

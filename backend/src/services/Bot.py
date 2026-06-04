@@ -1,10 +1,8 @@
 import dotenv
 import json
-import re
-from pathlib import Path
 from typing import Any
 
-from src.config.settings import GOOGLE_API_KEY, GEMINI_MODEL
+from src.config.settings import GOOGLE_API_KEY, GEMINI_MODEL, PORTFOLIO_CONTEXT_INDEX
 from src.config.log_config import setup_logging
 from src.config.prompts import SYSTEM_PROMPT
 from src.services.pinecone_service import PineconeService 
@@ -67,18 +65,12 @@ async def generate_response(context: list[Message] | None = None) -> str:
 
 async def retrieve_context(question: str) -> dict[str, Any]:
     pc = PineconeService()
-    context: dict[str, Any] = {"aboutme": None, "projects": {}}
+    context: dict[str, Any] = {"index": PORTFOLIO_CONTEXT_INDEX, "results": None}
 
     try:
-        context["aboutme"] = await pc.query_similar("aboutme", question)
+        context["results"] = await pc.query_similar(PORTFOLIO_CONTEXT_INDEX, question)
     except Exception as e:
-        logger.error(f"Error querying aboutme context: {e}", exc_info=True)
-
-    for index_name in matching_project_indexes(question):
-        try:
-            context["projects"][index_name] = await pc.query_similar(index_name, question)
-        except Exception as e:
-            logger.error(f"Error querying project context '{index_name}': {e}", exc_info=True)
+        logger.error(f"Error querying portfolio context: {e}", exc_info=True)
 
     return context
 
@@ -94,56 +86,3 @@ def build_context_prompt(retrieved_context: dict[str, Any]) -> str:
 
 def compact_context(retrieved_context: dict[str, Any]) -> str:
     return json.dumps(retrieved_context, default=str, ensure_ascii=False)[:8000]
-
-
-def matching_project_indexes(question: str) -> list[str]:
-    normalized_question = normalize_text(question)
-    matches = []
-    for project in load_project_candidates():
-        haystack = normalize_text(" ".join(project["terms"]))
-        if any(term and term in normalized_question for term in project["terms"]):
-            matches.append(project["index"])
-        elif any(term and term in haystack for term in normalized_question.split()):
-            matches.append(project["index"])
-    return sorted(set(matches))
-
-
-def load_project_candidates() -> list[dict[str, Any]]:
-    projects_path = Path(__file__).resolve().parents[3] / "src" / "data" / "projects.json"
-    try:
-        projects = json.loads(projects_path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return []
-
-    candidates = []
-    for project in projects:
-        name = project.get("name", "")
-        index = normalize_index_name(name.split("-")[0].strip() or name)
-        terms = [
-            normalize_text(name),
-            normalize_text(index),
-            *[normalize_text(part) for part in re.split(r"[\s\-/]+", name) if len(part) > 2],
-        ]
-        candidates.append({"index": index, "terms": [term for term in terms if term]})
-    return candidates
-
-
-def normalize_index_name(value: str) -> str:
-    normalized = re.sub(r"[^a-z0-9-]+", "-", value.lower()).strip("-")
-    return normalized or value.lower()
-
-
-def normalize_text(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
-
-
-if __name__ == "__main__":
-    async def main() -> None:
-        # The singleton is now managed by the lifespan in the main app
-        # Running this standalone would require separate initialization/cleanup
-        # or relying on the global singleton state which might be risky for tests.
-        user_prompt = input("Enter a prompt: ")
-        response1 = await generate_response(user_prompt)
-        print(f"Response 1: {response1}")
-        # ... other examples ...
-    asyncio.run(main())

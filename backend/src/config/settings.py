@@ -7,7 +7,7 @@ load_dotenv()
 
 # API Keys and Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite"
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "TheBluCoder")
 GITHUB_PROJECT_TOPIC = os.getenv("GITHUB_PROJECT_TOPIC", "portfolio")
@@ -18,6 +18,7 @@ RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "12"))
 TOPIC_GATE_THRESHOLD = float(os.getenv("TOPIC_GATE_THRESHOLD", "0.08"))
 TOPIC_GATE_INDEX = os.getenv("TOPIC_GATE_INDEX", "portfolio-topics")
+PORTFOLIO_CONTEXT_INDEX = os.getenv("PORTFOLIO_CONTEXT_INDEX", "aboutme")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 
 PINECONE_SPEC = ServerlessSpec(
