@@ -5,7 +5,7 @@ from src.services.github_service import GitHubService
 
 
 class GitHubServiceTests(unittest.IsolatedAsyncioTestCase):
-    async def test_filters_to_public_portfolio_repos(self):
+    async def test_filters_to_public_portfolio_repos(self) -> None:
         service = GitHubService(username="TheBluCoder", topic="portfolio")
         service._get_json = AsyncMock(
             return_value=[
@@ -32,7 +32,7 @@ class GitHubServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(projects), 1)
         self.assertEqual(projects[0]["name"], "shown")
 
-    async def test_ingests_projects_json_for_selected_repo(self):
+    async def test_ingests_projects_json_for_selected_repo(self) -> None:
         service = GitHubService(username="TheBluCoder", topic="portfolio")
         service.get_repo_project_data = AsyncMock(return_value=[{"name": "Demo", "description": "Test"}])
         repo = {"name": "demo", "private": False, "fork": False, "topics": ["portfolio"]}

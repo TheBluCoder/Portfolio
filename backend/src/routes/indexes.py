@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, Body
 from datetime import datetime, timezone as tz
 from src.models.schemas import DeleteIndexResponse, Content
-from typing import List, Dict
+from typing import Any
 from src.services.pinecone_service import PineconeService
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
 @router.get("/indexes")
-async def list_indexes():
+async def list_indexes() -> dict[str, Any]:
     try:
         pc = PineconeService()
         indexes = await pc.list_all_indexes()
@@ -21,7 +21,7 @@ async def list_indexes():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/indexes/{index_name}")
-async def delete_index(index_name: str):
+async def delete_index(index_name: str) -> DeleteIndexResponse:
     try:
         pc = PineconeService()
         if await pc.delete_index(index_name):
@@ -43,7 +43,7 @@ async def delete_index(index_name: str):
 @router.post("/indexes/create",status_code=200)
 async def create_index(
     index_name: str = Body(..., description="The name of the index to create")
-):
+) -> dict[str, str]:
     try:
         pc = PineconeService()
         await pc.get_or_create_index(index_name)
@@ -52,7 +52,10 @@ async def create_index(
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/indexes/{index_name}/upsert",status_code=200)
-async def upsert_index(index_name: str, documents: List[Content]):
+async def upsert_index(
+    index_name: str,
+    documents: list[Content],
+) -> dict[str, str] | JSONResponse:
     try:
         pc = PineconeService()
         await pc.upsert_documents(index_name, documents)
@@ -61,11 +64,10 @@ async def upsert_index(index_name: str, documents: List[Content]):
         return JSONResponse(status_code=500, content={"message": str(e)})
 
 @router.post("/indexes/{index_name}/query",status_code=200)
-async def query_index(index_name: str, query: str):
+async def query_index(index_name: str, query: str) -> dict[str, str] | JSONResponse:
     try:
         pc = PineconeService()
         await pc.query_similar(index_name, query)
         return {"message": f"Index '{index_name}' queried successfully"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
-

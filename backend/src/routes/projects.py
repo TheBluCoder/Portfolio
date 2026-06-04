@@ -1,6 +1,7 @@
 import hmac
 import json
 from hashlib import sha256
+from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Request
 
@@ -11,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/projects")
-async def list_projects():
+async def list_projects() -> dict[str, list[dict[str, Any]]]:
     return {"projects": await GitHubService().list_portfolio_projects()}
 
 
@@ -20,7 +21,7 @@ async def github_webhook(
     request: Request,
     x_github_event: str = Header(default=""),
     x_hub_signature_256: str = Header(default=""),
-):
+) -> dict[str, bool]:
     body = await request.body()
     _verify_signature(body, x_hub_signature_256)
 
@@ -33,7 +34,7 @@ async def github_webhook(
     return {"processed": processed}
 
 
-def _verify_signature(body: bytes, signature: str):
+def _verify_signature(body: bytes, signature: str) -> None:
     if not GITHUB_WEBHOOK_SECRET:
         raise HTTPException(status_code=500, detail="GitHub webhook secret is not configured")
 

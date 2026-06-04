@@ -1,6 +1,6 @@
 import asyncio
 import dotenv
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from src.config.settings import GOOGLE_API_KEY, GEMINI_MODEL
 from src.config.log_config import setup_logging
@@ -10,7 +10,6 @@ from src.services.pinecone_service import PineconeService
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.models.schemas import Message
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolCall, ToolMessage 
-from src.services.WebSearcher import WebSearcher
 from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGate
 
 
@@ -38,7 +37,7 @@ async def query_vector_db(query: str, index_name: str) -> str:
     try:
         response = await pc.query_similar(index_name, query)
         logger.info(f"Vector DB Response: {response}")
-        return response
+        return str(response)
     except Exception as e:
         logger.error(f"Error querying vector DB: {e}", exc_info=True)
         return f"Error querying vector database: {e}"
@@ -47,27 +46,13 @@ async def query_vector_db(query: str, index_name: str) -> str:
 async def query_about_me(query: str) -> str:
     """Queries the vector database for information about me(ikeoluwa)."""
     pc = PineconeService()
-    return await pc.query_similar("aboutme", query)
+    return str(await pc.query_similar("aboutme", query))
     
 @tool
 async def list_indexes() -> str:
     """Lists all the indexes in the vector database."""
     pc = PineconeService()
-    return pc.list_all_indexes()
-
-@tool
-async def google_search_retrieval_tool(query: str) -> str:
-    """Use Google Search to retrieve information.
-    This tool is used to retrieve information from the internet and should be used if the user's query is not about my software development projects or about me.
-
-    Args:
-        query (str): The query to search Google with.
-
-    Returns:
-        str: The response from Google Search.
-    """
-    web_searcher = WebSearcher()
-    return web_searcher.search(query)
+    return str(await pc.list_all_indexes())
 
 # --- LLM Configuration ---
 
@@ -82,7 +67,7 @@ llm = ChatGoogleGenerativeAI(
 # --- Core Logic ---
 
 async def format_context(context: list[Message]) -> list[HumanMessage | AIMessage]: # Use Union typing
-    formatted_context = []
+    formatted_context: list[HumanMessage | AIMessage] = []
     for msg in context:
         if msg.type == "human":
             formatted_context.append(HumanMessage(content=msg.content))
@@ -98,7 +83,7 @@ async def handle_langchain_tool_call(tool_call: ToolCall) -> ToolMessage:
     logger.info(f"Executing LangChain tool: {tool_name} with args: {args}")
 
     # Find the corresponding LangChain tool function
-    available_tools = {"query_vector_db": query_vector_db, "query_about_me": query_about_me}
+    available_tools: dict[str, Any] = {"query_vector_db": query_vector_db, "query_about_me": query_about_me}
 
     if tool_name in available_tools:
         try:
@@ -165,7 +150,7 @@ async def generate_response(context: Optional[List[Message]] = None) -> str:
 
 
 if __name__ == "__main__":
-    async def main():
+    async def main() -> None:
         # The singleton is now managed by the lifespan in the main app
         # Running this standalone would require separate initialization/cleanup
         # or relying on the global singleton state which might be risky for tests.

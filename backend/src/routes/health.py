@@ -5,7 +5,7 @@ from ..models.schemas import HealthResponse
 router = APIRouter()
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> HealthResponse:
     return HealthResponse(
         status="healthy",
         timestamp=datetime.utcnow()

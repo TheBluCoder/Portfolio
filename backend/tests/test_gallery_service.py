@@ -4,12 +4,12 @@ from src.services.gallery_service import GalleryService
 
 
 class GalleryServiceTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         GalleryService._memory_poems.clear()
         GalleryService._memory_comments.clear()
         GalleryService._memory_likes.clear()
 
-    def test_comment_is_hidden_until_approved(self):
+    def test_comment_is_hidden_until_approved(self) -> None:
         service = GalleryService(connection_string=None)
         poem = service.create_poem("Night", "A quiet line", None, ["poem"])
         comment = service.add_comment(poem["id"], "Reader", "Lovely", "visitor")
@@ -20,7 +20,7 @@ class GalleryServiceTests(unittest.TestCase):
 
         self.assertEqual(len(service.list_poems()[0]["comments"]), 1)
 
-    def test_like_counts_once_per_visitor(self):
+    def test_like_counts_once_per_visitor(self) -> None:
         service = GalleryService(connection_string=None)
         poem = service.create_poem("Night", "A quiet line", None, [])
 

@@ -6,7 +6,7 @@ from ..services.rate_limiter import RateLimitExceeded, RateLimiter
 router = APIRouter()
 
 @router.post("/chat")
-async def chat(request: Request, chat_request: ChatRequest):
+async def chat(request: Request, chat_request: ChatRequest) -> str:
     try:
         visitor_key = RateLimiter().visitor_key(
             request.client.host if request.client else "unknown",

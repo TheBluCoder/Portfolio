@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import os
 import functools
+from collections.abc import Awaitable
 from pinecone import PineconeAsyncio, SearchQuery, SearchRerank, IndexEmbed
 from src.config.settings import (
     PINECONE_API_KEY, 
@@ -16,7 +17,9 @@ from src.config.settings import (
 from src.config.log_config import setup_logging
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.models.schemas import Content
-from typing import List, Dict, Callable, Any
+from typing import Any, Callable, TypeVar
+
+T = TypeVar("T")
 
 # Determine a reasonable number of workers for chunking
 # Default to DEFAULT_CHUNK_WORKERS if cpu_count is not available or fails
@@ -27,12 +30,12 @@ except NotImplementedError:
 
 logger = setup_logging(filename='pinecone_service')
 
-def ensure_initialized(func: Callable) -> Callable:
+def ensure_initialized(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
     """
     Decorator to ensure PineconeService is initialized before method execution.
     """
     @functools.wraps(func)
-    async def wrapper(self, *args, **kwargs) -> Any:
+    async def wrapper(self: "PineconeService", *args: Any, **kwargs: Any) -> T:
         if not self._initialized:
             logger.info(f"Auto-initializing PineconeService before calling {func.__name__}")
             await self.initialize()
@@ -45,7 +48,7 @@ class PineconeService:
     _lock = asyncio.Lock()
     chunking_executor = None
     
-    def __new__(cls):
+    def __new__(cls) -> "PineconeService":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.pc = None
@@ -108,12 +111,17 @@ class PineconeService:
         return False
 
     @ensure_initialized
-    async def list_all_indexes(self):
+    async def list_all_indexes(self) -> Any:
         """List all available Pinecone indexes"""
         return await self.pc.list_indexes()
 
     @ensure_initialized
-    async def upsert_documents(self, index_name: str, documents: List[Content], batch_size: int = PINECONE_BATCH_SIZE):
+    async def upsert_documents(
+        self,
+        index_name: str,
+        documents: list[Content],
+        batch_size: int = PINECONE_BATCH_SIZE,
+    ) -> None:
         """Chunks documents and upserts them to Pinecone index in batches."""
         if not documents:
             logger.warning("No documents provided for upserting.")
@@ -150,7 +158,13 @@ class PineconeService:
             logger.info(f"Upsert complete. Successfully upserted {upserted_count}/{total_chunks} chunks.")
 
     @ensure_initialized
-    async def query_similar(self, index_name: str, query: str, top_k: int = PINECONE_QUERY_TOP_K, top_n: int = PINECONE_QUERY_TOP_N):
+    async def query_similar(
+        self,
+        index_name: str,
+        query: str,
+        top_k: int = PINECONE_QUERY_TOP_K,
+        top_n: int = PINECONE_QUERY_TOP_N,
+    ) -> Any:
         """Query similar vectors from Pinecone"""
         host = await self.get_or_create_index(index_name)
         async with self.pc.IndexAsyncio(host=host) as index:
@@ -164,7 +178,12 @@ class PineconeService:
             return results
 
     @ensure_initialized
-    async def chunk_documents(self, documents: List[Content], chunk_size: int = PINECONE_CHUNK_SIZE, chunk_overlap: int = PINECONE_CHUNK_OVERLAP) -> List[Dict]:
+    async def chunk_documents(
+        self,
+        documents: list[Content],
+        chunk_size: int = PINECONE_CHUNK_SIZE,
+        chunk_overlap: int = PINECONE_CHUNK_OVERLAP,
+    ) -> list[dict[str, str]]:
         """Chunk text content from multiple documents into smaller pieces using a shared thread pool executor."""
         logger.info(f"Starting chunking for {len(documents)} documents with chunk_size={chunk_size}, chunk_overlap={chunk_overlap}")
         splitter = RecursiveCharacterTextSplitter(
@@ -175,10 +194,10 @@ class PineconeService:
         )
         
         loop = asyncio.get_running_loop()
-        all_chunks = []
-        tasks = []
+        all_chunks: list[dict[str, str]] = []
+        tasks: list[tuple[Content, Awaitable[list[str]]]] = []
 
-        def run_split(text_to_split: str):
+        def run_split(text_to_split: str) -> list[str]:
             logger.debug(f"Running split_text in executor for text length: {len(text_to_split)}")
             chunks = splitter.split_text(text_to_split)
             logger.debug(f"split_text returned {len(chunks)} chunks")
@@ -211,7 +230,7 @@ class PineconeService:
         logger.info(f"Total valid chunks generated: {len(all_chunks)}")
         return all_chunks
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the Pinecone client connection and shutdown the executor."""
         if self._initialized:
             logger.info("Closing Pinecone client connection...")

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+from typing import Any
 
 from src.config.settings import (
     AZURE_TABLE_CONNECTION_STRING,
@@ -27,7 +28,7 @@ class RateLimiter:
         max_requests: int = RATE_LIMIT_MAX_REQUESTS,
         window_seconds: int = RATE_LIMIT_WINDOW_SECONDS,
         connection_string: str | None = AZURE_TABLE_CONNECTION_STRING,
-    ):
+    ) -> None:
         self.table_name = table_name
         self.max_requests = max_requests
         self.window_seconds = window_seconds
@@ -38,13 +39,13 @@ class RateLimiter:
         identity = f"{ip_address}|{user_agent}".encode("utf-8")
         return sha256(identity).hexdigest()
 
-    def check(self, visitor_key: str):
+    def check(self, visitor_key: str) -> None:
         if self.connection_string and TableServiceClient:
             self._check_azure_table(visitor_key)
             return
         self._check_memory(visitor_key)
 
-    def _check_memory(self, visitor_key: str):
+    def _check_memory(self, visitor_key: str) -> None:
         now = datetime.now(timezone.utc)
         record = self._memory_store.get(visitor_key)
         if not record or now >= record["expires_at"]:
@@ -59,7 +60,7 @@ class RateLimiter:
 
         record["count"] += 1
 
-    def _check_azure_table(self, visitor_key: str):
+    def _check_azure_table(self, visitor_key: str) -> None:
         now = datetime.now(timezone.utc)
         table = self._get_table_client()
         try:
@@ -83,7 +84,7 @@ class RateLimiter:
 
         table.upsert_entity(entity=entity, mode=UpdateMode.MERGE)
 
-    def _get_table_client(self):
+    def _get_table_client(self) -> Any:
         if self._table_client:
             return self._table_client
         service = TableServiceClient.from_connection_string(self.connection_string)

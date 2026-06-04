@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 from uuid import uuid4
 
 from src.config.settings import AZURE_TABLE_CONNECTION_STRING
@@ -11,17 +12,17 @@ except ImportError:  # pragma: no cover
 
 
 class GalleryService:
-    _memory_poems: dict[str, dict] = {}
-    _memory_comments: dict[str, dict] = {}
+    _memory_poems: dict[str, dict[str, Any]] = {}
+    _memory_comments: dict[str, dict[str, Any]] = {}
     _memory_likes: set[str] = set()
 
-    def __init__(self, connection_string: str | None = AZURE_TABLE_CONNECTION_STRING):
+    def __init__(self, connection_string: str | None = AZURE_TABLE_CONNECTION_STRING) -> None:
         self.connection_string = connection_string
         self._poems = None
         self._comments = None
         self._likes = None
 
-    def list_poems(self) -> list[dict]:
+    def list_poems(self) -> list[dict[str, Any]]:
         if self._use_memory:
             poems = list(self._memory_poems.values())
             return [self._with_approved_comments(poem.copy()) for poem in poems]
@@ -29,7 +30,13 @@ class GalleryService:
         poems = list(self._poems_table.query_entities("PartitionKey eq 'poem'"))
         return [self._with_approved_comments(dict(poem)) for poem in poems]
 
-    def create_poem(self, title: str, body: str, excerpt: str | None, tags: list[str]) -> dict:
+    def create_poem(
+        self,
+        title: str,
+        body: str,
+        excerpt: str | None,
+        tags: list[str],
+    ) -> dict[str, Any]:
         now = self._now()
         poem = {
             "PartitionKey": "poem",
@@ -49,7 +56,7 @@ class GalleryService:
 
         return self._serialize_poem(poem)
 
-    def like_poem(self, poem_id: str, visitor_key: str) -> dict:
+    def like_poem(self, poem_id: str, visitor_key: str) -> dict[str, Any]:
         like_id = f"{poem_id}:{visitor_key}"
         if self._use_memory:
             poem = self._memory_poems[poem_id]
@@ -68,7 +75,13 @@ class GalleryService:
             poem = self._poems_table.get_entity("poem", poem_id)
         return self._serialize_poem(dict(poem))
 
-    def add_comment(self, poem_id: str, author: str, body: str, visitor_key: str) -> dict:
+    def add_comment(
+        self,
+        poem_id: str,
+        author: str,
+        body: str,
+        visitor_key: str,
+    ) -> dict[str, Any]:
         comment = {
             "PartitionKey": "comment",
             "RowKey": uuid4().hex,
@@ -87,7 +100,7 @@ class GalleryService:
 
         return self._serialize_comment(comment)
 
-    def list_pending_comments(self) -> list[dict]:
+    def list_pending_comments(self) -> list[dict[str, Any]]:
         if self._use_memory:
             return [
                 self._serialize_comment(comment)
@@ -100,7 +113,7 @@ class GalleryService:
         )
         return [self._serialize_comment(dict(comment)) for comment in comments]
 
-    def moderate_comment(self, comment_id: str, approved: bool) -> dict:
+    def moderate_comment(self, comment_id: str, approved: bool) -> dict[str, Any]:
         if self._use_memory:
             comment = self._memory_comments[comment_id]
             comment["approved"] = approved
@@ -111,7 +124,7 @@ class GalleryService:
         self._comments_table.upsert_entity(comment, mode=UpdateMode.MERGE)
         return self._serialize_comment(dict(comment))
 
-    def _with_approved_comments(self, poem: dict) -> dict:
+    def _with_approved_comments(self, poem: dict[str, Any]) -> dict[str, Any]:
         poem_id = poem["RowKey"]
         if self._use_memory:
             comments = [
@@ -129,7 +142,7 @@ class GalleryService:
         serialized["comments"] = comments
         return serialized
 
-    def _serialize_poem(self, poem: dict) -> dict:
+    def _serialize_poem(self, poem: dict[str, Any]) -> dict[str, Any]:
         return {
             "id": poem["RowKey"],
             "title": poem["title"],
@@ -140,7 +153,7 @@ class GalleryService:
             "created_at": poem.get("created_at"),
         }
 
-    def _serialize_comment(self, comment: dict) -> dict:
+    def _serialize_comment(self, comment: dict[str, Any]) -> dict[str, Any]:
         return {
             "id": comment["RowKey"],
             "poem_id": comment["poem_id"],
@@ -155,21 +168,21 @@ class GalleryService:
         return not self.connection_string or not TableServiceClient
 
     @property
-    def _poems_table(self):
+    def _poems_table(self) -> Any:
         self._ensure_tables()
         return self._poems
 
     @property
-    def _comments_table(self):
+    def _comments_table(self) -> Any:
         self._ensure_tables()
         return self._comments
 
     @property
-    def _likes_table(self):
+    def _likes_table(self) -> Any:
         self._ensure_tables()
         return self._likes
 
-    def _ensure_tables(self):
+    def _ensure_tables(self) -> None:
         if self._poems:
             return
         service = TableServiceClient.from_connection_string(self.connection_string)

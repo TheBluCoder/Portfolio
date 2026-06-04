@@ -55,7 +55,7 @@ class TopicGate:
         self,
         seeds: list[str] | None = None,
         threshold: float = TOPIC_GATE_THRESHOLD,
-    ):
+    ) -> None:
         self.seeds = seeds or ON_TOPIC_SEEDS
         self.threshold = threshold
         self.seed_vectors = [self._vectorize(seed) for seed in self.seeds]
@@ -71,11 +71,11 @@ class TopicGate:
             return 0.0
         return max(self._cosine_similarity(query_vector, seed) for seed in self.seed_vectors)
 
-    def _vectorize(self, text: str) -> Counter:
+    def _vectorize(self, text: str) -> Counter[str]:
         tokens = re.findall(r"[a-z0-9]+", text.lower())
         return Counter(token for token in tokens if token not in STOPWORDS)
 
-    def _cosine_similarity(self, left: Counter, right: Counter) -> float:
+    def _cosine_similarity(self, left: Counter[str], right: Counter[str]) -> float:
         shared = set(left) & set(right)
         dot = sum(left[token] * right[token] for token in shared)
         left_norm = math.sqrt(sum(value * value for value in left.values()))

@@ -21,7 +21,7 @@ class GitHubService:
         username: str = GITHUB_USERNAME,
         topic: str = GITHUB_PROJECT_TOPIC,
         token: str | None = GITHUB_TOKEN,
-    ):
+    ) -> None:
         self.username = username
         self.topic = topic
         self.token = token

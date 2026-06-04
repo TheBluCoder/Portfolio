@@ -1,13 +1,14 @@
-import uvicorn
+# import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.routes import chat, indexes, health, projects, gallery
 from src.services.pinecone_service import PineconeService
 from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Initialize Pinecone service singleton on startup
     # The __new__ method ensures we get the singleton instance
     await PineconeService().initialize()
