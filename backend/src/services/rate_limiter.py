@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from src.config.settings import (
     AZURE_TABLE_CONNECTION_STRING,
@@ -8,10 +8,16 @@ from src.config.settings import (
     RATE_LIMIT_WINDOW_SECONDS,
 )
 
+if TYPE_CHECKING:
+    from azure.data.tables import TableClient
+else:
+    TableClient = Any
+
 try:
-    from azure.data.tables import TableServiceClient, UpdateMode
+    from azure.data.tables import TableServiceClient as AzureTableServiceClient
+    from azure.data.tables import UpdateMode
 except ImportError:  # pragma: no cover - exercised when Azure SDK is absent locally
-    TableServiceClient = None
+    AzureTableServiceClient = None
     UpdateMode = None
 
 
@@ -19,8 +25,13 @@ class RateLimitExceeded(Exception):
     pass
 
 
+class RateLimitRecord(TypedDict):
+    count: int
+    expires_at: datetime
+
+
 class RateLimiter:
-    _memory_store: dict[str, dict[str, object]] = {}
+    _memory_store: dict[str, RateLimitRecord] = {}
 
     def __init__(
         self,
@@ -33,14 +44,14 @@ class RateLimiter:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.connection_string = connection_string
-        self._table_client = None
+        self._table_client: TableClient | None = None
 
     def visitor_key(self, ip_address: str, user_agent: str) -> str:
         identity = f"{ip_address}|{user_agent}".encode("utf-8")
         return sha256(identity).hexdigest()
 
     def check(self, visitor_key: str) -> None:
-        if self.connection_string and TableServiceClient:
+        if self.connection_string and AzureTableServiceClient is not None:
             self._check_azure_table(visitor_key)
             return
         self._check_memory(visitor_key)
@@ -64,9 +75,12 @@ class RateLimiter:
         now = datetime.now(timezone.utc)
         table = self._get_table_client()
         try:
-            entity = table.get_entity(partition_key="chat", row_key=visitor_key)
+            entity = cast(
+                dict[str, Any],
+                table.get_entity(partition_key="chat", row_key=visitor_key),
+            )
         except Exception:
-            entity = {
+            entity: dict[str, Any] = {
                 "PartitionKey": "chat",
                 "RowKey": visitor_key,
                 "Count": 0,
@@ -78,16 +92,31 @@ class RateLimiter:
             entity["Count"] = 1
             entity["ExpiresAt"] = now + timedelta(seconds=self.window_seconds)
         else:
-            if entity.get("Count", 0) >= self.max_requests:
+            count = entity.get("Count", 0)
+            if not isinstance(count, int):
+                count = 0
+
+            if count >= self.max_requests:
                 raise RateLimitExceeded()
-            entity["Count"] = entity.get("Count", 0) + 1
+            entity["Count"] = count + 1
 
-        table.upsert_entity(entity=entity, mode=UpdateMode.MERGE)
+        table.upsert_entity(entity=entity, mode=self._merge_mode)
 
-    def _get_table_client(self) -> Any:
+    @property
+    def _merge_mode(self) -> Any:
+        if UpdateMode is None:
+            raise RuntimeError("Azure Table Storage dependencies are not available.")
+        return UpdateMode.MERGE
+
+    def _get_table_client(self) -> TableClient:
         if self._table_client:
             return self._table_client
-        service = TableServiceClient.from_connection_string(self.connection_string)
+        if AzureTableServiceClient is None:
+            raise RuntimeError("Azure Table Storage dependencies are not available.")
+        if self.connection_string is None:
+            raise RuntimeError("Azure Table connection string is not configured.")
+
+        service = AzureTableServiceClient.from_connection_string(self.connection_string)
         service.create_table_if_not_exists(self.table_name)
         self._table_client = service.get_table_client(self.table_name)
         return self._table_client

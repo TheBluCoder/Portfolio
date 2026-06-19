@@ -1,18 +1,44 @@
 [
-    {
-        "name": "CiteMe - Automatic Citation Generation System",
-        "description": "<b>CiteMe</b> is a modern, full-stack application designed to help students generate references and in-line citations efficiently. The system provides intelligent citation suggestions, reference management, and seamless integration with academic databases. Students do not have to worry about searching for sources to back essays and thesis. This web app will search the web, format your document with intext citation and include the references, sources and metrics to grade the credibility of the sources. The webapp also offers the choice of providing your own sources, in forms of urls, texts and pdfs and is able to use these sources to format your essays/thesis with intext citation and references in any citation format.",
-        "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1744039879/citeme_niijan.png",
-        "demo": "https://citeme.blucoder.cc",
-        "type": "website",
-        "source_code_url": "https://github.com/theblucoder/citeme"
-    },
-    {
-        "name": "Git Mentor",
-        "description": "<b>GitMentor</b> is a tool designed to help developers easily contribute to GitHub repositories. It provides AI-powered analysis of repositories and generates implementation plans for specific features, making it easier to understand the codebase and contribute effectively. The project consists of a frontend built with Next.js and a backend built with FastAPI, communicating through REST APIs. This project was built by a team of 3 for cuHacks 2025 and I was responsible for the backend development.  The project is being rebuilt by me under the name of GitRepoGuide as a full-stack application  using Vue.js, Tailwind CSS, FastAPI, Gemini and PostgreSQL as a vector database and would be featuring more features. Repo is available at <a href='https://github.com/TheBluCoder/GitRepoGuide'>https://github.com/TheBluCoder/GitRepoGuide</a>",
-        "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1744039879/gitmentor_d15nd7.png",
-        "demo": "https://gitmentor.co",
-        "type": "website",
-        "source_code_url": "https://github.com/esosaoh/git-mentor"
-    }
+  {
+    "name": "CiteMe - Automatic Citation Generation System",
+    "description": "<b>CiteMe</b> is a modern, full-stack application designed to help students generate references and in-line citations efficiently. The system provides intelligent citation suggestions, reference management, and seamless integration with academic databases. Students do not have to worry about searching for sources to back essays and thesis. This web app will search the web, format your document with in-text citations, and include references, sources, and credibility metrics for the sources. The web app also offers the choice of providing your own sources in the form of URLs, text, and PDFs, and can use these sources to format essays or theses with in-text citations and references in different citation formats.",
+    "why": "Citations are tedious. Students spend hours tracking down sources and formatting them correctly — only to second-guess every comma. I wanted to remove that friction entirely so writers could focus on the ideas, not the bibliography.",
+    "impact": "Live at citeme.blucoder.cc. Students can go from a topic or raw draft to a fully-cited document in seconds instead of hours of manual formatting.",
+    "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1744039879/citeme_niijan.png",
+    "video": "",
+    "demo": "https://citeme.blucoder.cc",
+    "type": "website",
+    "source_code_url": "https://github.com/theblucoder/citeme",
+    "tech_stack": [
+      { "name": "Vue", "icon": "fa-brands fa-vuejs" },
+      { "name": "Python", "icon": "fa-brands fa-python" },
+      { "name": "Gemini", "icon": "fa-solid fa-wand-magic-sparkles" },
+      { "name": "Pinecone", "icon": "fa-solid fa-database" },
+      { "name": "Tailwind CSS", "icon": "fa-brands fa-css3-alt" }
+    ],
+    "deployment_stack": ["Cloudinary", "Vercel", "Azure Functions"],
+    "topics": ["ai", "citations", "rag", "academic-writing"],
+    "updated_at": null
+  },
+  {
+    "name": "Git Mentor",
+    "description": "<b>GitMentor</b> is a tool designed to help developers easily contribute to GitHub repositories. It provides AI-powered analysis of repositories and generates implementation plans for specific features, making it easier to understand the codebase and contribute effectively. The project consists of a frontend built with Next.js and a backend built with FastAPI, communicating through REST APIs. This project was built by a team of 3 for cuHacks 2025, and I was responsible for the backend development. The project is being rebuilt by me under the name GitRepoGuide as a full-stack application using Vue.js, Tailwind CSS, FastAPI, Gemini, and PostgreSQL as a vector database.",
+    "why": "Open source is intimidating. The gap between 'I want to contribute' and 'I made a pull request' is filled with confusion about unfamiliar codebases. Built at cuHacking 2025 to bridge that gap — giving any developer a structured entry point into any repo.",
+    "impact": "Demoed at cuHacking 2025 by a team of 3. The concept proved strong enough that I'm rebuilding it solo as GitRepoGuide — a full-stack application with deeper analysis and a cleaner experience.",
+    "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1744039879/gitmentor_d15nd7.png",
+    "video": "",
+    "demo": "https://gitmentor.co",
+    "type": "website",
+    "source_code_url": "https://github.com/esosaoh/git-mentor",
+    "tech_stack": [
+      { "name": "React", "icon": "fa-brands fa-react" },
+      { "name": "Python", "icon": "fa-brands fa-python" },
+      { "name": "Gemini", "icon": "fa-solid fa-wand-magic-sparkles" },
+      { "name": "PostgreSQL", "icon": "fa-solid fa-database" },
+      { "name": "Tailwind CSS", "icon": "fa-brands fa-css3-alt" }
+    ],
+    "deployment_stack": ["Vercel", "Docker", "GitHub Actions"],
+    "topics": ["ai", "github", "developer-tools", "repository-analysis"],
+    "updated_at": null
+  }
 ]

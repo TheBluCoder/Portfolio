@@ -1,131 +1,429 @@
-<template>
-  <section
-    id="home"
-    class="min-h-screen w-full flex flex-col items-center justify-center bg-black p-8"
-    tabindex="0"
-    @click.stop="handleViewSwitch('introduction')"
-    @touchend="handleViewSwitch('introduction')"
-    autofocus
-  >
-    <div class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw]">
-      <div class="text-white text-3xl md:text-6xl lg:text-8xl mb-6">
-        <span class="text-green-500 font-semibold whitespace-nowrap">ikeoluwa@blucoder</span>:
-        <span class="text-purple-300/90 whitespace-nowrap">/home</span>
-        <span class="mr-2 whitespace-nowrap">$</span>
-      </div>
-      <div class="typing-container">
-        <div
-          class="animate-typing text-white/50 text-2xl md:text-5xl lg:text-7xl"
-          @animationend="handleAnimationEnd"
-        >
-          >>{{ typingText }}
-        </div>
-      </div>
-    </div>
-    <!--    reflection container -->
-    <div
-      class="w-full max-w-[90vw] md:max-w-[80vw] lg:max-w-[70vw] rotate-x-180 blur-[3px] -mt-4 mask-b-from-10% mask-b-from-gray mask-b-to-gray-50/10"
-    >
-      <div class="typing-container">
-        <div
-          class="animate-typing text-white/50 text-2xl md:text-5xl lg:text-7xl"
-          @animationend="handleAnimationEnd"
-        >
-          >>{{ typingText }}
-        </div>
-      </div>
-    </div>
-  </section>
-</template>
-
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useToast } from 'vue-toastification'
-import { POSITION } from 'vue-toastification'
+import { ref, inject, onMounted } from 'vue'
+import {
+  DownloadIcon,
+  MessageCircleIcon,
+  GithubIcon,
+  LinkedinIcon,
+  MailIcon,
+  Code2Icon,
+  BookOpenIcon,
+} from 'lucide-vue-next'
+import AboutSection from '@/components/home/AboutSection.vue'
+import ExperienceSection from '@/components/home/ExperienceSection.vue'
+import EducationSection from '@/components/home/EducationSection.vue'
+import SkillsSection from '@/components/home/SkillsSection.vue'
 
-const emit = defineEmits(['switch-view'])
-const typingText = ref('bash hello_world.sh')
-const toast = useToast()
-let activeToast = null
-let toastShown = ref(false)
+const resumeUrl = import.meta.env.VITE_RESUME_URL
+const apiBase = import.meta.env.VITE_API_BASE_URL
+const openChat = inject('openChat', () => { })
 
-const handleAnimationEnd = (event) => {
-  if (!toastShown.value && event.target.classList.contains('animate-typing')) {
-    activeToast = toast.info('Tap or press ENTER to continue...', {
-      position: POSITION.BOTTOM_RIGHT,
-      closeOnClick: true,
-      pauseOnHover: true,
-      toastClassName: ['toast-style'],
-      showCloseButtonOnHover: true,
-      timeout: 5000,
-    })
-    toastShown.value = true
-  }
-}
+const resumeData = ref(null)
+const resumeLoading = ref(true)
+const resumeError = ref(false)
 
-const handleKeyDown = (event) => {
-  if (event.key === 'Enter') {
-    handleViewSwitch('introduction')
-  }
-}
-
-const handleViewSwitch = (view) => {
-  if (activeToast) {
-    toast.dismiss(activeToast)
-    activeToast = null
-  }
-  emit('switch-view', view)
-}
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown)
-  if (activeToast) {
-    toast.dismiss(activeToast)
+onMounted(async () => {
+  try {
+    const res = await fetch(`${apiBase}/api/resume`)
+    if (!res.ok) throw new Error()
+    resumeData.value = await res.json()
+  } catch {
+    resumeError.value = true
+  } finally {
+    resumeLoading.value = false
   }
 })
 </script>
-<style>
-.typing-container {
-  display: inline-block;
-  overflow: hidden;
+
+<template>
+  <div class="home">
+
+    <!-- ─── Hero ─── -->
+    <section class="hero">
+      <h1 class="hero-name">Ikeoluwa Oladele</h1>
+      <div class="hero-accent-line"></div>
+
+      <p class="hero-tagline">
+        Software developer. Student. Occasional poet.
+      </p>
+      <p class="hero-sub">
+        Algonquin College, Ottawa&thinsp;—&thinsp;graduating 2026
+      </p>
+
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>open to new opportunities</span>
+      </div>
+
+      <div class="hero-actions">
+        <a :href="resumeUrl || '#'" target="_blank" rel="noopener noreferrer" class="btn-primary">
+          <DownloadIcon class="btn-icon" />
+          Download resume
+        </a>
+        <button class="btn-secondary" @click="openChat">
+          <MessageCircleIcon class="btn-icon" />
+          Chat with me
+        </button>
+      </div>
+
+      <div class="hero-socials">
+        <a href="https://github.com/TheBluCoder" target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+          class="social-link">
+          <GithubIcon class="social-icon" />
+        </a>
+        <a href="https://www.linkedin.com/in/ikeoluwa-oladele-15100820a/" target="_blank" rel="noopener noreferrer"
+          aria-label="LinkedIn" class="social-link">
+          <LinkedinIcon class="social-icon" />
+        </a>
+        <a href="mailto:oladeleikeoluwa508@gmail.com" aria-label="Email" class="social-link">
+          <MailIcon class="social-icon" />
+        </a>
+      </div>
+    </section>
+
+    <!-- ─── Resume-driven sections ─── -->
+    <AboutSection :content="resumeData?.about ?? null" :loading="resumeLoading" :error="resumeError" />
+
+    <ExperienceSection
+      v-if="resumeLoading || resumeData?.experience?.length"
+      :entries="resumeData?.experience ?? []"
+      :loading="resumeLoading"
+    />
+
+    <EducationSection
+      v-if="resumeLoading || resumeData?.education?.length"
+      :entries="resumeData?.education ?? []"
+      :loading="resumeLoading"
+    />
+
+    <SkillsSection
+      v-if="resumeLoading || resumeData?.skills?.length"
+      :groups="resumeData?.skills ?? []"
+      :loading="resumeLoading"
+    />
+
+    <!-- ─── Explore ─── -->
+    <hr class="divider" />
+
+    <section class="section">
+      <p class="section-label">// explore</p>
+
+      <div class="explore-grid">
+        <router-link to="/projects" class="explore-card">
+          <Code2Icon class="explore-card-icon" />
+          <h3 class="explore-card-title">Projects</h3>
+          <p class="explore-card-desc">What I build when I'm not studying</p>
+          <span class="explore-card-cta">View all →</span>
+        </router-link>
+
+        <router-link to="/gallery" class="explore-card">
+          <BookOpenIcon class="explore-card-icon" />
+          <h3 class="explore-card-title">Gallery</h3>
+          <p class="explore-card-desc">Poems, books, and things that rhyme</p>
+          <span class="explore-card-cta">Explore →</span>
+        </router-link>
+      </div>
+    </section>
+
+    <div class="page-footer-space"></div>
+  </div>
+</template>
+
+<style scoped>
+/* ── Layout ── */
+.home {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
 }
 
-.animate-typing {
-  border-right: 0.1em solid white;
-  white-space: nowrap;
-  overflow: hidden;
-  animation:
-    typing 3s steps(20) forwards,
-    blink 1s step-end infinite;
+/* ── Hero ── */
+.hero {
+  padding: 4rem 0 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-@keyframes typing {
+.hero-name {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.75rem, 9vw, 5rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: #e0ddf5;
+  margin-bottom: 0.5rem;
+  animation: fadeUp 0.65s ease both;
+}
+
+.hero-accent-line {
+  height: 2px;
+  width: 0;
+  background: rgba(139, 124, 248, 0.5);
+  border-radius: 2px;
+  margin-bottom: 1.25rem;
+  animation: drawLine 0.5s 0.45s ease-out both;
+}
+
+.hero-tagline {
+  font-size: 1.0625rem;
+  color: #9896b0;
+  line-height: 1.6;
+  margin-bottom: 0.375rem;
+  animation: fadeUp 0.55s 0.12s ease both;
+}
+
+.hero-sub {
+  font-size: 0.8125rem;
+  color: #4a4860;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  margin-bottom: 0.75rem;
+  animation: fadeUp 0.55s 0.22s ease both;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #4a4860;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  margin-bottom: 1.875rem;
+  animation: fadeUp 0.5s 0.3s ease both;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4ade80;
+  flex-shrink: 0;
+  animation: pulseDot 2.5s ease-in-out infinite;
+}
+
+/* CTAs */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.55s 0.38s ease both;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.3rem;
+  background: #8b7cf8;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.btn-primary:hover {
+  background: #9d90fa;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.3rem;
+  background: transparent;
+  color: #9896b0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e0ddf5;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.btn-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  flex-shrink: 0;
+}
+
+/* Socials */
+.hero-socials {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  animation: fadeUp 0.5s 0.52s ease both;
+}
+
+.social-link {
+  color: #42405a;
+  display: flex;
+  transition: color 0.15s;
+}
+
+.social-link:hover {
+  color: #8884a0;
+}
+
+.social-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* ── Shared divider (between sections and explore) ── */
+.divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 3rem 0;
+}
+
+/* ── Section label ── */
+.section-label {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1.75rem;
+}
+
+/* ── Explore ── */
+.explore-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.explore-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.explore-card:hover {
+  background: rgba(139, 124, 248, 0.05);
+  border-color: rgba(139, 124, 248, 0.18);
+  transform: translateY(-2px);
+}
+
+.explore-card-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+  color: #8b7cf8;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.explore-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #e0ddf5;
+}
+
+.explore-card-desc {
+  font-size: 0.875rem;
+  color: #6a6878;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.explore-card-cta {
+  font-size: 0.8125rem;
+  color: #8b7cf8;
+  font-family: ui-monospace, monospace;
+  margin-top: 0.25rem;
+}
+
+.page-footer-space {
+  height: 3rem;
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .hero {
+    padding: 2.5rem 0;
+  }
+
+  .explore-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Entrance animations ── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawLine {
   from {
     width: 0;
   }
+
   to {
-    width: 100%;
+    width: 2.5rem;
   }
 }
 
-@keyframes blink {
+@keyframes pulseDot {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+
   50% {
-    border-color: transparent;
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.12);
   }
 }
 
-.toast-style {
-  background: #1c1c1c !important;
-  backdrop-filter: blur(8px);
-  color: green !important;
-}
+@media (prefers-reduced-motion: reduce) {
 
-/* Remove outline on focused elements */
-#home:focus {
-  outline: none;
+  .hero-name,
+  .hero-accent-line,
+  .hero-tagline,
+  .hero-sub,
+  .status-indicator,
+  .hero-actions,
+  .hero-socials {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-accent-line {
+    width: 2.5rem;
+  }
+
+  .status-dot {
+    animation: none;
+  }
 }
 </style>

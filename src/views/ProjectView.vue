@@ -1,57 +1,111 @@
 <script setup>
 import fallbackProjects from '@/data/projects.json'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel'
-import Autoplay from 'embla-carousel-autoplay'
-import { inject, ref, onMounted, computed } from 'vue'
-import ProjectButtons from '@/components/ProjectButtons.vue'
-import { Teleport } from 'vue'
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { ExternalLinkIcon, GithubIcon } from 'lucide-vue-next'
 
-// Setup autoplay with reasonable defaults
-const plugin = Autoplay({
-  delay: 5000,
-  stopOnMouseEnter: true,
-  stopOnInteraction: false,
-})
-
-const api = ref(null)
-const showDescription = ref(true)
-const openProjectChat = inject('openProjectChat')
-const isMobile = computed(() => window.innerWidth <= 768)
-const currentSlideIndex = ref(0)
+const setActiveProjectChatContext = inject('setActiveProjectChatContext', () => {})
+const clearActiveProjectChatContext = inject('clearActiveProjectChatContext', () => {})
 const projects = ref(fallbackProjects)
+const selectedProjectName = ref(fallbackProjects[0]?.name || '')
+const detailRef = ref(null)
 
-// Add a computed property that returns the current project
-const currentProject = computed(() => projects.value[currentSlideIndex.value])
+const selectedProject = computed(
+  () =>
+    projects.value.find((project) => project.name === selectedProjectName.value) ||
+    projects.value[0],
+)
 
-const handleAskQuestion = (project) => {
-  openProjectChat(project)
+const directVideoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.m4v']
+
+const normalizeYouTubeEmbedUrl = (url) => {
+  const videoId =
+    url.hostname === 'youtu.be'
+      ? url.pathname.slice(1)
+      : url.searchParams.get('v') || url.pathname.split('/').pop()
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : ''
 }
 
-const setApi = (val) => {
-  api.value = val
-
-  // Add a change event listener to update the currentSlideIndex
-  api.value.on('select', () => {
-    currentSlideIndex.value = api.value.selectedScrollSnap()
-  })
+const normalizeVimeoEmbedUrl = (url) => {
+  const videoId = url.pathname
+    .split('/')
+    .filter(Boolean)
+    .find((segment) => /^\d+$/.test(segment))
+  return videoId ? `https://player.vimeo.com/video/${videoId}` : ''
 }
 
-onMounted(() => {
-  // Adjust initial state based on screen size
-  window.addEventListener('resize', () => {
-    showDescription.value = !isMobile.value
-  })
+const normalizeLoomEmbedUrl = (url) => {
+  const segments = url.pathname.split('/').filter(Boolean)
+  const shareIndex = segments.indexOf('share')
+  const videoId = shareIndex >= 0 ? segments[shareIndex + 1] : segments.at(-1)
+  return videoId ? `https://www.loom.com/embed/${videoId}` : ''
+}
 
-  // Set initial state
-  showDescription.value = !isMobile.value
-  loadProjects()
+const projectVideo = computed(() => {
+  const source = selectedProject.value?.video?.trim()
+  if (!source) return null
+  try {
+    const url = new URL(source, window.location.origin)
+    const pathname = url.pathname.toLowerCase()
+    const isDirectVideo = directVideoExtensions.some((ext) => pathname.endsWith(ext))
+    if (isDirectVideo) return { type: 'direct', source }
+    if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+      const embedUrl = normalizeYouTubeEmbedUrl(url)
+      return embedUrl ? { type: 'embed', source: embedUrl } : null
+    }
+    if (url.hostname.includes('vimeo.com')) {
+      const embedUrl = normalizeVimeoEmbedUrl(url)
+      return embedUrl ? { type: 'embed', source: embedUrl } : null
+    }
+    if (url.hostname.includes('loom.com')) {
+      const embedUrl = normalizeLoomEmbedUrl(url)
+      return embedUrl ? { type: 'embed', source: embedUrl } : null
+    }
+  } catch (e) {
+    console.warn('Invalid project video URL:', e)
+  }
+  return { type: 'embed', source }
 })
+
+const selectProject = (project) => {
+  selectedProjectName.value = project.name
+  if (window.innerWidth < 1024) {
+    nextTick(() => {
+      detailRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+}
+
+const stackItems = (project, keys) => {
+  for (const key of keys) {
+    const value = project?.[key]
+    if (Array.isArray(value)) return value
+    if (typeof value === 'string' && value.trim()) {
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    }
+  }
+  return []
+}
+
+const techStack = computed(() =>
+  stackItems(selectedProject.value, ['tech_stack', 'techStack', 'technologies', 'stack']),
+)
+
+const deploymentStack = computed(() =>
+  stackItems(selectedProject.value, ['deployment_stack', 'deploymentStack', 'deployment']),
+)
+
+const stackIconClass = (item) => {
+  if (typeof item === 'string') return ''
+  return item?.icon || item?.class || ''
+}
+
+const stackIconLabel = (item) => {
+  if (typeof item === 'string') return item
+  return item?.name || item?.label || item?.icon || 'Technology'
+}
 
 const loadProjects = async () => {
   const projectsUrl = import.meta.env.VITE_PROJECTS_URL || '/api/projects'
@@ -66,100 +120,702 @@ const loadProjects = async () => {
     console.warn('Using fallback projects:', error)
   }
 }
+
+watch(
+  projects,
+  (projectList) => {
+    if (!projectList.some((project) => project.name === selectedProjectName.value)) {
+      selectedProjectName.value = projectList[0]?.name || ''
+    }
+  },
+  { immediate: true },
+)
+
+onMounted(loadProjects)
+
+watch(
+  selectedProject,
+  (project) => {
+    setActiveProjectChatContext(project || null)
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  clearActiveProjectChatContext()
+})
 </script>
 
-<style scoped>
-@reference '@/assets/main.css';
-.project-card {
-  @apply bg-gray-800/80 border border-gray-700 rounded-lg overflow-hidden transition-all duration-300;
-}
-
-.project-image {
-  @apply w-full h-auto object-cover rounded-t-lg;
-}
-
-.project-title {
-  @apply text-orange-200 text-lg md:text-xl font-semibold p-3 pb-1 italic;
-}
-
-.project-description {
-  @apply text-gray-300 text-sm md:text-base p-3 pt-1 font-light leading-relaxed;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.project-description a {
-  @apply text-orange-200 hover:text-orange-300 transition-colors duration-200;
-}
-
-.project-description::-webkit-scrollbar {
-  width: 4px;
-}
-
-.project-description::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.project-description::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.3);
-  border-radius: 4px;
-}
-
-.carousel-container {
-  @apply relative w-full max-w-[298px] sm:max-w-md md:max-w-xl lg:max-w-3xl mx-auto;
-}
-
-.carousel-navigation {
-  @apply opacity-50 hover:opacity-100 transition-opacity duration-200;
-}
-</style>
-
 <template>
-  <div class="flex items-center justify-center h-full w-full p-4">
-    <Carousel id="carousel" class="carousel-container" :plugins="[plugin]" @init-api="setApi">
-      <CarouselContent>
-        <CarouselItem
-          v-for="(project, index) in projects"
-          :key="index"
-          class="flex flex-col items-center justify-center"
-        >
-          <div class="project-card w-full">
-            <!-- Project Image -->
-            <div class="relative overflow-hidden group">
+  <div class="pv-page">
+    <div class="pv-wrap">
+
+      <!-- ── Sidebar ── -->
+      <aside class="pv-sidebar">
+        <div class="pv-sidebar-header">
+          <p class="section-label">// projects</p>
+          <span class="pv-count">{{ projects.length }}</span>
+        </div>
+
+        <div class="pv-list">
+          <button
+            v-for="project in projects"
+            :key="project.name"
+            class="pv-item"
+            :class="{ 'pv-item--active': selectedProject?.name === project.name }"
+            @click="selectProject(project)"
+          >
+            <div class="pv-item-top">
+              <span class="pv-item-name">{{ project.name }}</span>
+              <span class="pv-item-type">{{ project.type || 'project' }}</span>
+            </div>
+            <p class="pv-item-desc" v-html="project.description"></p>
+          </button>
+        </div>
+      </aside>
+
+      <!-- ── Detail ── -->
+      <main v-if="selectedProject" ref="detailRef" class="pv-detail">
+        <div class="pv-detail-grid">
+
+          <!-- ── Main column ── -->
+          <div class="pv-main">
+
+            <!-- Header -->
+            <div class="pv-detail-head">
+              <span class="pv-detail-type">{{ selectedProject.type || 'project' }}</span>
+              <h1 class="pv-detail-name">{{ selectedProject.name }}</h1>
+            </div>
+
+            <!-- Media -->
+            <div class="pv-media">
+              <video
+                v-if="projectVideo?.type === 'direct'"
+                :src="projectVideo.source"
+                :poster="selectedProject.image"
+                class="pv-media-inner"
+                controls
+                preload="metadata"
+                playsinline
+              >Your browser does not support the video tag.</video>
+              <iframe
+                v-else-if="projectVideo?.type === 'embed'"
+                :src="projectVideo.source"
+                :title="`${selectedProject.name} demo`"
+                class="pv-media-inner"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
               <img
-                :src="project.image"
-                :alt="project.name"
-                class="project-image"
+                v-else
+                :src="selectedProject.image"
+                :alt="selectedProject.name"
+                class="pv-media-inner pv-media-img"
                 onerror="this.src='/placeholder-image.png'"
               />
-              <!-- Project Buttons (shown on hover on desktop) -->
-              <div
-                class="absolute inset-0 flex items-center justify-center bg-black/60 transition-opacity duration-300 ease-linear lg:flex lg:opacity-0 lg:group-hover:opacity-100 lg:pointer-events-none lg:group-hover:pointer-events-auto"
-                v-if="!isMobile"
-              >
-                <ProjectButtons :project="project" @ask-question="handleAskQuestion" />
+            </div>
+
+            <!-- Mobile-only: horizontal icon tiles right under media -->
+            <div class="pv-tech-mobile">
+              <div v-if="techStack.length" class="tech-tiles-h">
+                <div
+                  v-for="item in techStack"
+                  :key="stackIconLabel(item)"
+                  class="tech-tile-h"
+                  :title="stackIconLabel(item)"
+                >
+                  <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-h"></i>
+                  <i v-else class="fa-solid fa-code tech-icon-h"></i>
+                  <span class="tech-name-h">{{ stackIconLabel(item) }}</span>
+                </div>
+              </div>
+              <div v-if="deploymentStack.length" class="deploy-row-h">
+                <span class="deploy-label">on</span>
+                <span v-for="item in deploymentStack" :key="item" class="deploy-pill">{{ item }}</span>
               </div>
             </div>
 
-            <!-- Project Info -->
-            <div v-if="showDescription || isMobile">
-              <h3 class="project-title">{{ project.name }}</h3>
-              <div class="project-description text-base" v-html="project.description"></div>
+            <!-- Links -->
+            <div class="pv-links">
+              <a
+                v-if="selectedProject.demo"
+                :href="selectedProject.demo"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="pv-btn pv-btn--primary"
+              >
+                <ExternalLinkIcon class="pv-btn-icon" />
+                Live demo
+              </a>
+              <a
+                v-if="selectedProject.source_code_url"
+                :href="selectedProject.source_code_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="pv-btn pv-btn--ghost"
+              >
+                <GithubIcon class="pv-btn-icon" />
+                View code
+              </a>
             </div>
+
+            <hr class="divider" />
+
+            <!-- // what -->
+            <section class="pv-section">
+              <p class="section-label">// what</p>
+              <div class="pv-prose" v-html="selectedProject.what || selectedProject.description"></div>
+            </section>
+
+            <!-- // why -->
+            <template v-if="selectedProject.why">
+              <hr class="divider" />
+              <section class="pv-section">
+                <p class="section-label">// why</p>
+                <p class="pv-prose">{{ selectedProject.why }}</p>
+              </section>
+            </template>
+
+            <!-- // how (mobile: in main flow; desktop: hidden, shown in right column) -->
+            <template v-if="!techStack.length && !deploymentStack.length">
+              <hr class="divider" />
+              <section class="pv-section">
+                <p class="section-label">// how</p>
+                <p class="pv-empty">No stack metadata yet.</p>
+              </section>
+            </template>
+
+            <!-- // impact -->
+            <template v-if="selectedProject.impact">
+              <hr class="divider" />
+              <section class="pv-section">
+                <p class="section-label">// impact</p>
+                <p class="pv-prose">{{ selectedProject.impact }}</p>
+              </section>
+            </template>
+
+            <p class="chat-hint">Want the deeper version? Ask about this project in the chat →</p>
+            <div class="pv-footer"></div>
           </div>
-        </CarouselItem>
-      </CarouselContent>
 
-      <!-- Navigation Controls -->
-      <CarouselPrevious class="carousel-navigation" />
-      <CarouselNext class="carousel-navigation" />
-    </Carousel>
+          <!-- ── Desktop-only: floating vertical icon column ── -->
+          <aside class="pv-tech-col" v-if="techStack.length || deploymentStack.length">
+            <p class="section-label">// how</p>
 
-    <!-- Teleported Mobile/Medium Buttons -->
-    <Teleport to="#project-btn">
-      <div v-if="isMobile" class="flex items-center justify-center gap-3 p-3 w-full">
-        <ProjectButtons :project="currentProject" @ask-question="handleAskQuestion" />
-      </div>
-    </Teleport>
+            <div v-if="techStack.length" class="tech-tiles-v">
+              <div
+                v-for="item in techStack"
+                :key="stackIconLabel(item)"
+                class="tech-tile-v"
+                :title="stackIconLabel(item)"
+              >
+                <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-v"></i>
+                <i v-else class="fa-solid fa-code tech-icon-v"></i>
+                <span class="tech-name-v">{{ stackIconLabel(item) }}</span>
+              </div>
+            </div>
+
+            <template v-if="deploymentStack.length">
+              <p class="deploy-label-v">deployed on</p>
+              <div class="deploy-pills-v">
+                <span v-for="item in deploymentStack" :key="item" class="deploy-pill-v">{{ item }}</span>
+              </div>
+            </template>
+          </aside>
+
+        </div>
+      </main>
+
+    </div>
   </div>
 </template>
+
+<style scoped>
+/* ── Page ── */
+.pv-page {
+  background: #0c0c10;
+  color: #e0ddf5;
+  min-height: 100%;
+}
+
+.pv-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ── Shared tokens ── */
+.section-label {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 2.25rem 0;
+}
+
+/* ── Sidebar ── */
+.pv-sidebar {
+  padding: 2.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pv-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.pv-count {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: #3e3c52;
+}
+
+.pv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pv-item {
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1rem 1rem 1.125rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-left-color 0.15s;
+  color: inherit;
+}
+
+.pv-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-left-color: rgba(139, 124, 248, 0.3);
+}
+
+.pv-item--active {
+  background: rgba(139, 124, 248, 0.04);
+  border-color: rgba(139, 124, 248, 0.1);
+  border-left-color: #8b7cf8;
+}
+
+.pv-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.pv-item-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #6a6878;
+  line-height: 1.3;
+  flex: 1;
+  transition: color 0.15s;
+}
+
+.pv-item:hover .pv-item-name,
+.pv-item--active .pv-item-name {
+  color: #e0ddf5;
+}
+
+.pv-item-type {
+  font-family: ui-monospace, monospace;
+  font-size: 0.625rem;
+  color: #3e3c52;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.pv-item-desc {
+  font-size: 0.8rem;
+  color: #42405a;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Detail ── */
+.pv-detail {
+  padding: 2.5rem 0 0;
+}
+
+.pv-detail-head {
+  margin-bottom: 1.5rem;
+}
+
+.pv-detail-type {
+  display: block;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #8b7cf8;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.pv-detail-name {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 800;
+  color: #e0ddf5;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* ── Media ── */
+.pv-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #141419;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1.25rem;
+}
+
+.pv-media-inner {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pv-media-img {
+  object-fit: cover;
+}
+
+/* ── Buttons ── */
+.pv-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.pv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.pv-btn--primary {
+  background: #8b7cf8;
+  color: #fff;
+  border: 1px solid #8b7cf8;
+}
+.pv-btn--primary:hover {
+  background: #9d90fa;
+  transform: translateY(-1px);
+}
+
+.pv-btn--ghost {
+  background: transparent;
+  color: #9896b0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.pv-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e0ddf5;
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.pv-btn-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+/* ── Section prose ── */
+.pv-prose {
+  font-size: 0.9375rem;
+  color: #7a7888;
+  line-height: 1.8;
+}
+
+:deep(.pv-prose b),
+:deep(.pv-prose strong) {
+  color: #c8c6e0;
+  font-weight: 600;
+}
+
+:deep(.pv-prose a) {
+  color: #8b7cf8;
+  text-decoration: none;
+}
+
+:deep(.pv-prose a:hover) {
+  text-decoration: underline;
+}
+
+/* ── Tech pills ── */
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tech-pill {
+  font-size: 0.8125rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #7a7888;
+  cursor: default;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.tech-pill:hover {
+  background: rgba(139, 124, 248, 0.08);
+  border-color: rgba(139, 124, 248, 0.22);
+  color: #b5aef8;
+}
+
+/* ── Deployment ── */
+.deploy-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.deploy-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.08em;
+}
+
+.deploy-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.deploy-pill {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #4a4860;
+}
+
+.pv-empty {
+  font-size: 0.875rem;
+  color: #3e3c52;
+}
+
+/* ── Chat hint ── */
+.chat-hint {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.06em;
+  margin-top: 2.5rem;
+}
+
+.pv-footer {
+  height: 3rem;
+}
+
+/* ── Desktop: sticky sidebar + scrolling detail ── */
+@media (min-width: 1024px) {
+  .pv-wrap {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    gap: 0 3.5rem;
+    align-items: start;
+  }
+
+  .pv-sidebar {
+    position: sticky;
+    top: 56px;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    padding: 2.5rem 2.5rem 2.5rem 0;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+  }
+
+  .pv-detail {
+    padding: 2.5rem 0;
+  }
+}
+
+/* ── Tech stack: shared ── */
+.deploy-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.08em;
+}
+
+/* Mobile: horizontal icon tiles, vertical column hidden */
+.pv-tech-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.tech-tiles-h {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tech-tile-h {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.5rem 0.4rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  min-width: 52px;
+  cursor: default;
+  transition: background 0.15s, border-color 0.15s;
+}
+.tech-tile-h:hover {
+  background: rgba(139, 124, 248, 0.08);
+  border-color: rgba(139, 124, 248, 0.2);
+}
+.tech-icon-h {
+  font-size: 1.125rem;
+  color: #7a7888;
+  transition: color 0.15s;
+}
+.tech-tile-h:hover .tech-icon-h { color: #b5aef8; }
+.tech-name-h {
+  font-size: 0.5625rem;
+  color: #52506a;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+  max-width: 56px;
+  transition: color 0.15s;
+}
+.tech-tile-h:hover .tech-name-h { color: #9896b0; }
+
+.deploy-row-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pv-tech-col { display: none; }
+
+/* Desktop: vertical icon column, mobile strip hidden */
+@media (min-width: 1024px) {
+  .pv-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 112px;
+    gap: 0 1.75rem;
+    align-items: start;
+  }
+
+  .pv-tech-mobile { display: none; }
+
+  .pv-tech-col {
+    display: block;
+    position: sticky;
+    top: 76px;
+    padding-top: 2.5rem;
+  }
+
+  .tech-tiles-v {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .tech-tile-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.625rem 0.375rem 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    cursor: default;
+    text-align: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .tech-tile-v:hover {
+    background: rgba(139, 124, 248, 0.08);
+    border-color: rgba(139, 124, 248, 0.2);
+  }
+
+  .tech-icon-v {
+    font-size: 1.375rem;
+    color: #7a7888;
+    transition: color 0.15s;
+  }
+  .tech-tile-v:hover .tech-icon-v { color: #b5aef8; }
+
+  .tech-name-v {
+    font-size: 0.5625rem;
+    color: #52506a;
+    line-height: 1.3;
+    word-break: break-word;
+    transition: color 0.15s;
+  }
+  .tech-tile-v:hover .tech-name-v { color: #9896b0; }
+
+  .deploy-label-v {
+    font-family: ui-monospace, monospace;
+    font-size: 0.5625rem;
+    color: #3e3c52;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.375rem;
+    margin-top: 0.25rem;
+  }
+
+  .deploy-pills-v {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .deploy-pill-v {
+    font-size: 0.5625rem;
+    padding: 0.25rem 0.375rem;
+    text-align: center;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #4a4860;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+}
+</style>

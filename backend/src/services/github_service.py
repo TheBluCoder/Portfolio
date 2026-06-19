@@ -7,14 +7,13 @@ from typing import Any
 
 from src.config.log_config import setup_logging
 from src.config.settings import GITHUB_PROJECT_TOPIC, GITHUB_TOKEN, GITHUB_USERNAME
-from src.models.schemas import Content
-from src.services.pinecone_service import PineconeService
 
 logger = setup_logging(filename="github_service")
 
 
 class GitHubService:
     api_base = "https://api.github.com"
+    portfolio_metadata_path = ".github/project.json"
 
     def __init__(
         self,
@@ -42,10 +41,11 @@ class GitHubService:
         )
         projects = []
         for repo in repos:
-            if not self._is_selected_public_repo(repo):
+            if not self.is_selected_public_repo(repo):
                 continue
 
             project_data = await self.get_repo_project_data(repo["name"])
+            logger.info("Loaded project metadata for repo '%s'", repo["name"])
             projects.extend(self._normalize_project_entries(repo, project_data))
 
         return projects
@@ -53,7 +53,7 @@ class GitHubService:
     async def get_repo_project_data(self, repo_name: str) -> list[dict[str, Any]]:
         try:
             response = await self._get_json(
-                f"{self.api_base}/repos/{self.username}/{repo_name}/contents/projects.json"
+                f"{self.api_base}/repos/{self.username}/{repo_name}/contents/{self.portfolio_metadata_path}"
             )
         except FileNotFoundError:
             return []
@@ -63,25 +63,7 @@ class GitHubService:
         parsed = json.loads(decoded)
         return parsed if isinstance(parsed, list) else [parsed]
 
-    async def ingest_repo_project_data(self, repo: dict[str, Any]) -> bool:
-        if not self._is_selected_public_repo(repo):
-            return False
-
-        project_data = await self.get_repo_project_data(repo["name"])
-        if not project_data:
-            return False
-
-        documents = [
-            Content(
-                id=f"{repo['name']}-{index}",
-                text=json.dumps(project, ensure_ascii=False),
-            )
-            for index, project in enumerate(project_data)
-        ]
-        await PineconeService().upsert_documents(self._index_name(repo["name"]), documents)
-        return True
-
-    def _is_selected_public_repo(self, repo: dict[str, Any]) -> bool:
+    def is_selected_public_repo(self, repo: dict[str, Any]) -> bool:
         topics = repo.get("topics") or []
         return (
             not repo.get("private", True)
@@ -100,15 +82,38 @@ class GitHubService:
             "name": data.get("name") or repo.get("name"),
             "description": data.get("description") or repo.get("description") or "",
             "image": data.get("image") or data.get("cover_image") or "/placeholder-image.png",
+            "video": data.get("video") or "",
             "demo": data.get("demo") or data.get("homepage") or repo.get("homepage") or "",
             "type": data.get("type") or "repository",
             "source_code_url": data.get("source_code_url") or repo.get("html_url"),
+            "tech_stack": data.get("tech_stack")
+            or data.get("techStack")
+            or data.get("technologies")
+            or data.get("stack")
+            or [],
+            "deployment_stack": data.get("deployment_stack")
+            or data.get("deploymentStack")
+            or data.get("deployment")
+            or [],
             "topics": repo.get("topics", []),
             "updated_at": repo.get("updated_at"),
         }
 
-    def _index_name(self, repo_name: str) -> str:
-        return repo_name.lower().replace("_", "-")
+    async def get_repo_readme(self, repo_name: str) -> str:
+        try:
+            response = await self._get_json(
+                f"{self.api_base}/repos/{self.username}/{repo_name}/readme"
+            )
+        except FileNotFoundError:
+            return ""
+
+        return self._decode_github_file_content(response)
+
+    def _decode_github_file_content(self, response: dict[str, Any]) -> str:
+        content = response.get("content", "")
+        if not content:
+            return ""
+        return base64.b64decode(content).decode("utf-8")
 
     async def _get_json(self, url: str) -> Any:
         return await asyncio.to_thread(self._get_json_sync, url)

@@ -1,39 +1,26 @@
 <template>
   <div class="h-full">
     <Layout>
-      <div class="h-full w-[97%] mx-auto">
-        <router-view v-slot="{ Component }">
-          <transition name="page" mode="out-in">
-            <component :is="Component" @switch-view="switch_view($event)" />
-          </transition>
-        </router-view>
-      </div>
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </Layout>
   </div>
 </template>
 
 <script setup>
 import Layout from './components/Layout.vue'
-import router from './router'
-
-const switch_view = (view) => {
-  router.push(`/${view}`)
-}
 </script>
 
 <style scoped>
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.5s ease;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
 }
-
-.page-enter-from {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  transform: translateY(100px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-100px);
 }
 </style>

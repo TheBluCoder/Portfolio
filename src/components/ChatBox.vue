@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { XIcon, SendIcon } from 'lucide-vue-next'
 import MarkdownIt from 'markdown-it'
 
@@ -32,6 +32,22 @@ const newMessage = ref('')
 const chatContainer = ref(null)
 const inputRef = ref(null)
 
+const projectDetailsForPrompt = computed(() => {
+  if (!props.projectContext) return ''
+
+  const project = props.projectContext
+  const details = [
+    `Project name: ${project.name || 'Unknown project'}`,
+    project.type ? `Type: ${project.type}` : '',
+    project.demo ? `Live demo: ${project.demo}` : '',
+    project.source_code_url ? `Source code: ${project.source_code_url}` : '',
+    project.video ? `Video: ${project.video}` : '',
+    project.description ? `Description: ${project.description.replace(/<[^>]*>/g, ' ')}` : '',
+  ].filter(Boolean)
+
+  return details.join('\n')
+})
+
 // Get current conversation based on context
 const currentConversation = computed(() => {
   if (props.projectContext) {
@@ -44,6 +60,10 @@ const currentConversation = computed(() => {
   return messages.value.global
 })
 
+const visibleConversation = computed(() =>
+  currentConversation.value.filter((message) => !message.hidden),
+)
+
 // Add initial message based on context
 watch(
   () => props.isOpen,
@@ -51,6 +71,11 @@ watch(
     const conversation = currentConversation.value
     if (conversation.length === 0) {
       if (props.projectContext) {
+        conversation.push({
+          type: 'human',
+          content: `The user is viewing this project:\n${projectDetailsForPrompt.value}`,
+          hidden: true,
+        })
         conversation.push({
           type: 'ai',
           content: `Hi! 👋.I see you're curious about the "${props.projectContext.name}" project! What would you like to know? The architecture, deployment process, or maybe the inspiration behind it? Feel free to ask anything :)`,
@@ -135,6 +160,15 @@ const sendMessage = async () => {
       throw new Error(`API responded with status ${response.status}`)
     }
 
+    try {
+      const parsedData = JSON.parse(data)
+      if (typeof parsedData === 'string') {
+        data = parsedData
+      }
+    } catch {
+      // The backend may also return plain text, which is already ready to render.
+    }
+
     // Explicitly replace escaped newlines with actual newlines
     data = data.replace(/\\n/g, '\n')
 
@@ -158,6 +192,7 @@ const sendMessage = async () => {
 const renderMarkdown = (content) => {
   return md.render(content)
 }
+
 </script>
 
 <template>
@@ -166,7 +201,7 @@ const renderMarkdown = (content) => {
       'fixed z-50 transition-all duration-300 ease-in-out',
       'md:w-[400px] w-full md:max-w-[400px]',
       'flex flex-col bg-gray-900/95 backdrop-blur-md',
-      'md:right-4 md:top-4 md:bottom-4 md:rounded-lg',
+      'md:right-4 md:top-[60px] md:bottom-4 md:rounded-lg',
       isOpen ? 'top-0 bottom-0' : 'translate-x-full md:translate-y-full',
     ]"
   >
@@ -185,10 +220,10 @@ const renderMarkdown = (content) => {
     <!-- Messages -->
     <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
       <div
-        v-for="(message, index) in currentConversation"
+        v-for="(message, index) in visibleConversation"
         :key="index"
         :class="[
-          'max-w-[70%] rounded-lg p-3',
+          'max-w-[70%] min-w-0 overflow-hidden rounded-lg p-3',
           message.type === 'human' ? 'bg-blue-600 text-white ml-auto' : 'bg-gray-700 text-gray-100',
         ]"
       >
@@ -201,7 +236,7 @@ const renderMarkdown = (content) => {
         </template>
         <template v-else>
           <div
-            class="prose prose-invert prose-sm max-w-full prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 prose-a:text-blue-400"
+            class="chat-markdown prose prose-invert prose-sm max-w-full prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 prose-a:text-blue-400"
             v-html="renderMarkdown(message.content)"
           ></div>
         </template>
@@ -307,5 +342,43 @@ const renderMarkdown = (content) => {
 
 .prose p {
   margin-bottom: 0.75em;
+}
+
+.chat-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chat-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.45) transparent;
+}
+
+.chat-markdown pre::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chat-markdown pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-markdown pre::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.45);
+  border-radius: 4px;
+}
+
+.chat-markdown code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-markdown pre code {
+  display: block;
+  min-width: max-content;
+  white-space: pre;
+  overflow-wrap: normal;
 }
 </style>

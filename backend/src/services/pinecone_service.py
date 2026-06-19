@@ -1,9 +1,13 @@
 import asyncio
 import concurrent.futures
-import os
 import functools
+import os
 from collections.abc import Awaitable
-from pinecone import PineconeAsyncio, SearchQuery, SearchRerank, IndexEmbed
+from types import TracebackType
+from typing import Any, Protocol, TypeAlias, TypeVar, cast
+
+from pinecone import PineconeAsyncio, SearchQuery, SearchRerank, IndexEmbed  # pyright: ignore[reportMissingTypeStubs]
+from pinecone.openapi_support.exceptions import NotFoundException
 from src.config.settings import (
     PINECONE_API_KEY, 
     DEFAULT_CHUNK_WORKERS,
@@ -17,16 +21,69 @@ from src.config.settings import (
 from src.config.log_config import setup_logging
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.models.schemas import Content
-from typing import Any, Callable, TypeVar
+from typing import Callable
 
 T = TypeVar("T")
+ChunkRecord: TypeAlias = dict[str, str]
+DEFAULT_NAMESPACE = ""
+
+
+class PineconeIndexStats(Protocol):
+    host: str
+
+
+class PineconeIndexAsyncContext(Protocol):
+    async def __aenter__(self) -> "PineconeIndex": ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> bool | None: ...
+
+
+class PineconeIndex(Protocol):
+    async def upsert_records(self, namespace: str, records: list[ChunkRecord]) -> None: ...
+    async def delete(
+        self,
+        ids: list[str] | None = None,
+        delete_all: bool | None = None,
+        namespace: str | None = None,
+        filter: dict[str, Any] | None = None,
+    ) -> Any: ...
+    async def search(
+        self,
+        namespace: str,
+        query: SearchQuery,
+        rerank: SearchRerank,
+    ) -> Any: ...
+    async def describe_index_stats(self, filter: dict[str, Any] | None = None) -> Any: ...
+    def list(self, **kwargs: Any) -> Any: ...
+
+
+class PineconeClient(Protocol):
+    async def has_index(self, index_name: str) -> bool: ...
+    async def create_index_for_model(
+        self,
+        *,
+        name: str,
+        cloud: str,
+        region: str,
+        embed: IndexEmbed,
+        timeout: int,
+    ) -> PineconeIndexStats: ...
+    async def describe_index(self, index_name: str) -> PineconeIndexStats: ...
+    async def delete_index(self, index_name: str) -> None: ...
+    async def list_indexes(self) -> Any: ...
+    def IndexAsyncio(self, host: str, **kwargs: Any) -> PineconeIndexAsyncContext: ...
+    async def close(self) -> None: ...
 
 # Determine a reasonable number of workers for chunking
 # Default to DEFAULT_CHUNK_WORKERS if cpu_count is not available or fails
 try:
-    MAX_CHUNK_WORKERS = os.cpu_count() or DEFAULT_CHUNK_WORKERS
+    max_chunk_workers = os.cpu_count() or DEFAULT_CHUNK_WORKERS
 except NotImplementedError:
-    MAX_CHUNK_WORKERS = DEFAULT_CHUNK_WORKERS
+    max_chunk_workers = DEFAULT_CHUNK_WORKERS
 
 logger = setup_logging(filename='pinecone_service')
 
@@ -36,17 +93,18 @@ def ensure_initialized(func: Callable[..., Awaitable[T]]) -> Callable[..., Await
     """
     @functools.wraps(func)
     async def wrapper(self: "PineconeService", *args: Any, **kwargs: Any) -> T:
-        if not self._initialized:
+        if not self.is_initialized:
             logger.info(f"Auto-initializing PineconeService before calling {func.__name__}")
             await self.initialize()
         return await func(self, *args, **kwargs)
     return wrapper
 
 class PineconeService:
-    _instance = None
-    _initialized = False
+    _instance: "PineconeService | None" = None
     _lock = asyncio.Lock()
-    chunking_executor = None
+    _initialized: bool
+    pc: PineconeClient | None
+    chunking_executor: concurrent.futures.ThreadPoolExecutor | None
     
     def __new__(cls) -> "PineconeService":
         if cls._instance is None:
@@ -61,12 +119,12 @@ class PineconeService:
             if not self._initialized:
                 logger.info("Initializing PineconeService...")
                 try:
-                    self.pc = PineconeAsyncio(api_key=PINECONE_API_KEY)
+                    self.pc = cast(PineconeClient, PineconeAsyncio(api_key=PINECONE_API_KEY))
                     self.chunking_executor = concurrent.futures.ThreadPoolExecutor(
-                        max_workers=MAX_CHUNK_WORKERS,
+                        max_workers=max_chunk_workers,
                         thread_name_prefix='ChunkerThread'
                     )
-                    logger.info(f"Created chunking executor with max_workers={MAX_CHUNK_WORKERS}")
+                    logger.info(f"Created chunking executor with max_workers={max_chunk_workers}")
                     self._initialized = True
                     logger.info("PineconeService initialized.")
                 except Exception as e:
@@ -74,15 +132,26 @@ class PineconeService:
                     raise
         return self
 
+    @property
+    def is_initialized(self) -> bool:
+        return self._initialized
+
+    @property
+    def _client(self) -> PineconeClient:
+        if self.pc is None:
+            raise RuntimeError("PineconeService is not initialized.")
+        return self.pc
+
     @ensure_initialized
     async def get_or_create_index(self, index_name: str) -> str:
         """
         Get the host for a Pinecone index. Creates the index if it doesn't exist.
         Returns the index host URL.
         """
-        if not await self.pc.has_index(index_name):
+        client = self._client
+        if not await client.has_index(index_name):
             logger.info(f"Index '{index_name}' not found. Creating...")
-            index_stats = await self.pc.create_index_for_model(
+            index_stats = await client.create_index_for_model(
                 name=index_name,
                 cloud="aws", 
                 region="us-east-1", 
@@ -94,7 +163,7 @@ class PineconeService:
             return host
         else:
             logger.info(f"Index '{index_name}' found. Describing...")
-            index_description = await self.pc.describe_index(index_name)
+            index_description = await client.describe_index(index_name)
             host = index_description.host
             logger.info(f"Pinecone index {index_name} host is {host}")
             return host
@@ -102,9 +171,10 @@ class PineconeService:
     @ensure_initialized
     async def delete_index(self, index_name: str) -> bool:
         """Delete a Pinecone index"""
-        if await self.pc.has_index(index_name):
+        client = self._client
+        if await client.has_index(index_name):
             logger.info(f"Deleting index '{index_name}'...")
-            await self.pc.delete_index(index_name)
+            await client.delete_index(index_name)
             logger.info(f"Index '{index_name}' deleted.")
             return True
         logger.info(f"Index '{index_name}' not found for deletion.")
@@ -113,13 +183,14 @@ class PineconeService:
     @ensure_initialized
     async def list_all_indexes(self) -> Any:
         """List all available Pinecone indexes"""
-        return await self.pc.list_indexes()
+        return await self._client.list_indexes()
 
     @ensure_initialized
     async def upsert_documents(
         self,
         index_name: str,
         documents: list[Content],
+        namespace: str = DEFAULT_NAMESPACE,
         batch_size: int = PINECONE_BATCH_SIZE,
     ) -> None:
         """Chunks documents and upserts them to Pinecone index in batches."""
@@ -130,6 +201,7 @@ class PineconeService:
         host = await self.get_or_create_index(index_name)
         
         # Step 1: Chunk all documents using the shared executor
+        client = self._client
         all_chunks = await self.chunk_documents(documents)
         if not all_chunks:
             logger.warning("No chunks were generated from the provided documents.")
@@ -139,43 +211,185 @@ class PineconeService:
         logger.info(f"Generated {total_chunks} chunks from {len(documents)} documents.")
 
         # Step 2: Upsert chunks in batches
-        async with self.pc.IndexAsyncio(host=host) as index:
-            logger.info(f"Starting upsert to index '{index_name}' at host {host} in batches of {batch_size}...")
+        async with client.IndexAsyncio(host=host) as index:
+            logger.info(
+                f"Starting upsert to index '{index_name}' namespace '{namespace}' at host {host} "
+                f"in batches of {batch_size}..."
+            )
             upserted_count = 0
+            failed_batches = 0
             for i in range(0, total_chunks, batch_size):
                 batch = all_chunks[i:i + batch_size]
-                logger.info(f"batch {batch} ")
                 batch_ids = [chunk['id'] for chunk in batch]
                 logger.debug(f"Upserting batch {i // batch_size + 1}/{(total_chunks + batch_size - 1) // batch_size} with {len(batch)} chunks (IDs: {batch_ids[:5]}...)")
                 try:
-                    await index.upsert_records(namespace="default", records=batch)
+                    await index.upsert_records(namespace=namespace, records=batch)
                     upserted_count += len(batch)
                     logger.debug(f"Successfully upserted batch {i // batch_size + 1}")
                 except Exception as e:
+                    failed_batches += 1
                     logger.error(f"Error upserting batch {i // batch_size + 1} (IDs: {batch_ids[:5]}...): {e}")
                     continue
             
             logger.info(f"Upsert complete. Successfully upserted {upserted_count}/{total_chunks} chunks.")
+            if failed_batches or upserted_count != total_chunks:
+                raise RuntimeError(
+                    f"Upsert incomplete for index '{index_name}' namespace '{namespace}': "
+                    f"{upserted_count}/{total_chunks} chunks upserted."
+                )
 
     @ensure_initialized
     async def query_similar(
         self,
         index_name: str,
         query: str,
+        namespace: str = DEFAULT_NAMESPACE,
         top_k: int = PINECONE_QUERY_TOP_K,
         top_n: int = PINECONE_QUERY_TOP_N,
     ) -> Any:
         """Query similar vectors from Pinecone"""
         host = await self.get_or_create_index(index_name)
-        async with self.pc.IndexAsyncio(host=host) as index:
-            logger.info(f"Querying index '{index_name}' at host {host}...")
+        async with self._client.IndexAsyncio(host=host) as index:
+            logger.info(f"Querying index '{index_name}' namespace '{namespace}' at host {host}...")
             results = await index.search(
-                namespace="default", 
+                namespace=namespace, 
                 query=SearchQuery(inputs={"text": query}, top_k=top_k), 
-                rerank=SearchRerank(model="pinecone-rerank-v0", rank_fields=["text"], top_n=top_n, query=query)
+                rerank=SearchRerank(
+                    model="pinecone-rerank-v0",
+                    rank_fields=["text"],
+                    top_n=top_n,
+                    query=query,
+                    parameters={"truncate": "END"},
+                )
             )
             logger.info("Query complete.")
             return results
+
+    @ensure_initialized
+    async def query_similar_namespaces(
+        self,
+        index_name: str,
+        query: str,
+        namespaces: list[str] | None = None,
+        top_k: int = PINECONE_QUERY_TOP_K,
+        top_n: int = PINECONE_QUERY_TOP_N,
+    ) -> dict[str, Any]:
+        """Query similar vectors across multiple namespaces in an index."""
+        target_namespaces = namespaces or await self.list_namespaces(index_name)
+        results: dict[str, Any] = {}
+
+        for namespace in target_namespaces:
+            try:
+                results[namespace] = await self.query_similar(
+                    index_name,
+                    query,
+                    namespace=namespace,
+                    top_k=top_k,
+                    top_n=top_n,
+                )
+            except Exception as e:
+                logger.error(
+                    "Error querying index '%s' namespace '%s': %s",
+                    index_name,
+                    namespace,
+                    e,
+                    exc_info=True,
+                )
+
+        return results
+
+    @ensure_initialized
+    async def list_namespaces(self, index_name: str) -> list[str]:
+        """List namespaces present in an index using index stats."""
+        host = await self.get_or_create_index(index_name)
+        async with self._client.IndexAsyncio(host=host) as index:
+            stats = await index.describe_index_stats()
+
+        raw_namespaces = getattr(stats, "namespaces", None)
+        if raw_namespaces is None and isinstance(stats, dict):
+            raw_namespaces = stats.get("namespaces")
+        if isinstance(raw_namespaces, dict):
+            return list(raw_namespaces.keys())
+        return [DEFAULT_NAMESPACE]
+
+    @ensure_initialized
+    async def upsert_single_record(
+        self,
+        index_name: str,
+        namespace: str,
+        text: str,
+        record_id: str | None = None,
+    ) -> str:
+        """Upsert a single text record (no chunking). Returns the record ID."""
+        import uuid
+        rid = record_id or uuid.uuid4().hex
+        host = await self.get_or_create_index(index_name)
+        async with self._client.IndexAsyncio(host=host) as index:
+            await index.upsert_records(namespace=namespace, records=[{"id": rid, "text": text}])
+        logger.info("Upserted single record '%s' to index '%s' ns '%s'", rid, index_name, namespace)
+        return rid
+
+    @ensure_initialized
+    async def delete_records_by_ids(
+        self,
+        index_name: str,
+        namespace: str,
+        ids: list[str],
+    ) -> None:
+        """Delete specific records by their IDs."""
+        host = await self.get_or_create_index(index_name)
+        async with self._client.IndexAsyncio(host=host) as index:
+            await index.delete(ids=ids, namespace=namespace)
+        logger.info("Deleted %d records from index '%s' ns '%s'", len(ids), index_name, namespace)
+
+    @ensure_initialized
+    async def delete_namespace(self, index_name: str, namespace: str) -> None:
+        """Delete all records from a namespace without deleting the index."""
+        host = await self.get_or_create_index(index_name)
+        async with self._client.IndexAsyncio(host=host) as index:
+            logger.info("Deleting namespace '%s' from index '%s'", namespace, index_name)
+            try:
+                await index.delete(delete_all=True, namespace=namespace)
+            except NotFoundException:
+                logger.info(
+                    "Namespace '%s' was not found in index '%s'; nothing to delete.",
+                    namespace,
+                    index_name,
+                )
+
+    @ensure_initialized
+    async def delete_records_by_prefix(
+        self,
+        index_name: str,
+        namespace: str,
+        prefix: str,
+    ) -> int:
+        """Delete records in a namespace whose IDs start with a prefix."""
+        host = await self.get_or_create_index(index_name)
+        deleted_count = 0
+
+        async with self._client.IndexAsyncio(host=host) as index:
+            try:
+                async for id_batch in index.list(prefix=prefix, namespace=namespace):
+                    if not id_batch:
+                        continue
+                    await index.delete(ids=id_batch, namespace=namespace)
+                    deleted_count += len(id_batch)
+            except NotFoundException:
+                logger.info(
+                    "Namespace '%s' was not found in index '%s'; no prefixed records to delete.",
+                    namespace,
+                    index_name,
+                )
+
+        logger.info(
+            "Deleted %s records from index '%s' namespace '%s' with prefix '%s'",
+            deleted_count,
+            index_name,
+            namespace,
+            prefix,
+        )
+        return deleted_count
 
     @ensure_initialized
     async def query_topic_similarity(self, query: str, index_name: str) -> float:
@@ -185,30 +399,28 @@ class PineconeService:
 
     def extract_best_score(self, results: Any) -> float:
         """Extract the best score from Pinecone search results with SDK-shape tolerance."""
-        candidates = []
+        candidates: list[Any]
         if isinstance(results, dict):
-            candidates = (
-                results.get("matches")
-                or results.get("result", {}).get("hits")
-                or results.get("hits")
-                or []
-            )
+            result_obj = results.get("result")
+            result_hits = result_obj.get("hits") if isinstance(result_obj, dict) else None
+            raw_candidates = results.get("matches") or result_hits or results.get("hits") or []
         else:
-            candidates = (
+            raw_candidates = (
                 getattr(results, "matches", None)
                 or getattr(getattr(results, "result", None), "hits", None)
                 or getattr(results, "hits", None)
                 or []
             )
+        candidates = list(raw_candidates) if isinstance(raw_candidates, list) else []
 
-        scores = []
+        scores: list[float] = []
         for candidate in candidates:
             if isinstance(candidate, dict):
-                score = candidate.get("score") or candidate.get("_score")
+                raw_score = candidate.get("score") or candidate.get("_score")
             else:
-                score = getattr(candidate, "score", None) or getattr(candidate, "_score", None)
-            if score is not None:
-                scores.append(float(score))
+                raw_score = getattr(candidate, "score", None) or getattr(candidate, "_score", None)
+            if raw_score is not None:
+                scores.append(float(raw_score))
         return max(scores, default=0.0)
 
     @ensure_initialized
@@ -217,7 +429,7 @@ class PineconeService:
         documents: list[Content],
         chunk_size: int = PINECONE_CHUNK_SIZE,
         chunk_overlap: int = PINECONE_CHUNK_OVERLAP,
-    ) -> list[dict[str, str]]:
+    ) -> list[ChunkRecord]:
         """Chunk text content from multiple documents into smaller pieces using a shared thread pool executor."""
         logger.info(f"Starting chunking for {len(documents)} documents with chunk_size={chunk_size}, chunk_overlap={chunk_overlap}")
         splitter = RecursiveCharacterTextSplitter(
@@ -228,7 +440,7 @@ class PineconeService:
         )
         
         loop = asyncio.get_running_loop()
-        all_chunks: list[dict[str, str]] = []
+        all_chunks: list[ChunkRecord] = []
         tasks: list[tuple[Content, Awaitable[list[str]]]] = []
 
         def run_split(text_to_split: str) -> list[str]:
@@ -238,9 +450,11 @@ class PineconeService:
             return chunks
 
         for doc in documents:
-            if not doc.text or not isinstance(doc.text, str) or not doc.text.strip():
+            if not doc.text or not doc.text.strip():
                 logger.warning(f"Skipping document ID {doc.id} due to empty or invalid text content.")
                 continue
+            if self.chunking_executor is None:
+                raise RuntimeError("Chunking executor is not initialized.")
             task = loop.run_in_executor(self.chunking_executor, run_split, doc.text)
             tasks.append((doc, task))
             
@@ -250,7 +464,10 @@ class PineconeService:
             if isinstance(result, Exception):
                 logger.error(f"Error chunking document ID {doc.id}: {result}")
                 continue
-            
+            if not isinstance(result, list):
+                logger.error(f"Unexpected chunking result for document ID {doc.id}: {result}")
+                continue
+
             text_chunks = result
             logger.debug(f"Processing {len(text_chunks)} chunks for doc ID {doc.id} from executor result.")
             for i, text_chunk in enumerate(text_chunks):
@@ -268,7 +485,7 @@ class PineconeService:
         """Close the Pinecone client connection and shutdown the executor."""
         if self._initialized:
             logger.info("Closing Pinecone client connection...")
-            await self.pc.close()
+            await self._client.close()
             logger.info("Pinecone client connection closed.")
             
             if self.chunking_executor:

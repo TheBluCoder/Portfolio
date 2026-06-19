@@ -1,5 +1,7 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+import base64
+import json
+from unittest.mock import AsyncMock
 
 from src.services.github_service import GitHubService
 
@@ -32,17 +34,21 @@ class GitHubServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(projects), 1)
         self.assertEqual(projects[0]["name"], "shown")
 
-    async def test_ingests_projects_json_for_selected_repo(self) -> None:
+    async def test_loads_metadata_from_github_project_json(self) -> None:
         service = GitHubService(username="TheBluCoder", topic="portfolio")
-        service.get_repo_project_data = AsyncMock(return_value=[{"name": "Demo", "description": "Test"}])
-        repo = {"name": "demo", "private": False, "fork": False, "topics": ["portfolio"]}
+        payload = [{"name": "Demo"}]
+        service._get_json = AsyncMock(
+            return_value={
+                "content": base64.b64encode(json.dumps(payload).encode("utf-8")).decode("utf-8")
+            }
+        )
 
-        with patch("src.services.github_service.PineconeService") as pinecone:
-            pinecone.return_value.upsert_documents = AsyncMock()
-            processed = await service.ingest_repo_project_data(repo)
+        projects = await service.get_repo_project_data("demo")
 
-        self.assertTrue(processed)
-        pinecone.return_value.upsert_documents.assert_awaited_once()
+        self.assertEqual(projects, payload)
+        service._get_json.assert_awaited_once_with(
+            "https://api.github.com/repos/TheBluCoder/demo/contents/.github/project.json"
+        )
 
 
 if __name__ == "__main__":
