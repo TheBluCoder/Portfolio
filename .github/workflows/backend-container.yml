@@ -1,13 +1,14 @@
-name: Backend Azure Functions
+name: Backend container
 
 on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
 jobs:
-  test-and-deploy:
+  test-and-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -42,9 +43,5 @@ jobs:
           PINECONE_API_KEY: test
         run: python -m unittest discover backend/tests
 
-      - name: Deploy backend to Azure Functions
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
-          package: backend
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+      - name: Build backend container
+        run: docker build --tag portfolio-backend:${{ github.sha }} backend

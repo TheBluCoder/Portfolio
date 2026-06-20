@@ -8,6 +8,7 @@ load_dotenv()
 # API Keys and Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite"
+CHAT_HISTORY_MAX_TURNS = int(os.getenv("CHAT_HISTORY_MAX_TURNS", "6"))
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "TheBluCoder")
 GITHUB_PROJECT_TOPIC = os.getenv("GITHUB_PROJECT_TOPIC", "portfolio")

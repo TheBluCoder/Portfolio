@@ -1,3 +1,5 @@
+"""Build and maintain vector-search context for portfolio projects."""
+
 import json
 from collections.abc import Awaitable
 from typing import Any, Protocol
@@ -11,6 +13,8 @@ logger = setup_logging(filename="project_ingestion_service")
 
 
 class ProjectVectorStore(Protocol):
+    """Vector-store operations required by project ingestion."""
+
     def upsert_documents(
         self,
         index_name: str,
@@ -27,6 +31,8 @@ class ProjectVectorStore(Protocol):
 
 
 class ProjectIngestionService:
+    """Ingest selected GitHub repositories and manual notes into isolated namespaces."""
+
     def __init__(
         self,
         github_service: GitHubService,
@@ -38,6 +44,7 @@ class ProjectIngestionService:
         self.index_name = index_name
 
     async def ingest_repo(self, repo: dict[str, Any]) -> bool:
+        """Replace a selected repository's vector context from metadata and README content."""
         if not self.github_service.is_selected_public_repo(repo):
             return False
 
@@ -65,6 +72,7 @@ class ProjectIngestionService:
         return True
 
     async def delete_repo(self, repo: dict[str, Any]) -> bool:
+        """Delete all vector context for a repository named in a webhook payload."""
         repo_name = repo.get("name")
         if not repo_name:
             logger.warning("Skipping namespace cleanup for payload without a repository name")
@@ -81,6 +89,7 @@ class ProjectIngestionService:
         title: str | None = None,
         owner: str | None = None,
     ) -> dict[str, str]:
+        """Replace one manual note and return its namespace and deterministic document ID."""
         # Use a dedicated :manual namespace so re-ingestion never wipes manual context.
         namespace = self.manual_namespace(owner or self.github_service.username, repo_name)
         document_id = f"manual-{self._slug(context_id)}"
@@ -99,11 +108,13 @@ class ProjectIngestionService:
         return {"namespace": namespace, "document_id": document_id}
 
     def repo_namespace(self, repo: dict[str, Any]) -> str:
+        """Return the stable vector namespace for a repository payload."""
         owner = repo.get("owner", {}).get("login") or self.github_service.username
         repo_name = repo.get("name", "unknown")
         return self.project_namespace(owner, repo_name)
 
     def project_namespace(self, owner: str, repo_name: str) -> str:
+        """Build a normalized project namespace from repository ownership."""
         return f"github:{self._slug(owner)}:{self._slug(repo_name)}"
 
     def manual_namespace(self, owner: str, repo_name: str) -> str:
@@ -116,6 +127,7 @@ class ProjectIngestionService:
         readme: str,
         project_data: list[dict[str, Any]],
     ) -> str:
+        """Combine repository identity, metadata, and README text for embedding."""
         repo_summary = {
             "name": repo.get("name"),
             "description": repo.get("description") or "",
@@ -140,6 +152,7 @@ class ProjectIngestionService:
         text: str,
         title: str | None,
     ) -> str:
+        """Format a titled or untitled manual note for embedding."""
         heading = title or context_id
         return (
             "Manual project context:\n"
@@ -150,4 +163,5 @@ class ProjectIngestionService:
         )
 
     def _slug(self, value: str) -> str:
+        """Normalize an identifier for use in namespaces and record keys."""
         return value.lower().replace("_", "-").replace("/", "-")

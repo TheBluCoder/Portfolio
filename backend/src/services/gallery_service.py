@@ -1,3 +1,5 @@
+"""Persist poems, likes, and moderated comments with an in-memory fallback."""
+
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Mapping, TypedDict, cast
 from uuid import uuid4
@@ -20,6 +22,8 @@ except ImportError:  # pragma: no cover
 
 
 class PoemEntity(TypedDict):
+    """Storage representation of a poem entity."""
+
     PartitionKey: str
     RowKey: str
     title: str
@@ -31,6 +35,8 @@ class PoemEntity(TypedDict):
 
 
 class CommentEntity(TypedDict):
+    """Storage representation of a poem comment awaiting or passing moderation."""
+
     PartitionKey: str
     RowKey: str
     poem_id: str
@@ -42,6 +48,8 @@ class CommentEntity(TypedDict):
 
 
 class LikeEntity(TypedDict):
+    """Storage representation used to enforce one like per visitor and poem."""
+
     PartitionKey: str
     RowKey: str
     poem_id: str
@@ -49,6 +57,8 @@ class LikeEntity(TypedDict):
 
 
 class GalleryService:
+    """Manage gallery data in Azure Tables or process-local memory when unconfigured."""
+
     _memory_poems: dict[str, PoemEntity] = {}
     _memory_comments: dict[str, CommentEntity] = {}
     _memory_likes: set[str] = set()
@@ -60,6 +70,7 @@ class GalleryService:
         self._likes: TableClient | None = None
 
     def list_poems(self) -> list[Poem]:
+        """Return all poems with only their approved comments attached."""
         if self._use_memory:
             poems = list(self._memory_poems.values())
             return [self._with_approved_comments(poem.copy()) for poem in poems]
@@ -74,6 +85,7 @@ class GalleryService:
         excerpt: str | None,
         tags: list[str],
     ) -> Poem:
+        """Create and persist a poem, deriving an excerpt when none is provided."""
         now = self._now()
         poem: PoemEntity = {
             "PartitionKey": "poem",
@@ -94,6 +106,7 @@ class GalleryService:
         return self._serialize_poem(poem)
 
     def like_poem(self, poem_id: str, visitor_key: str) -> Like:
+        """Record an idempotent visitor like and return the poem's current like count."""
         like_id = f"{poem_id}:{visitor_key}"
         liked = False
         created_at = self._now()
@@ -128,6 +141,7 @@ class GalleryService:
         body: str,
         visitor_key: str,
     ) -> Comment:
+        """Create an unapproved comment for later moderation."""
         comment: CommentEntity = {
             "PartitionKey": "comment",
             "RowKey": uuid4().hex,
@@ -147,6 +161,7 @@ class GalleryService:
         return self._serialize_comment(comment)
 
     def get_poem(self, poem_id: str) -> Poem:
+        """Return one poem with approved comments, raising KeyError when it is missing."""
         if self._use_memory:
             poem = self._memory_poems.get(poem_id)
             if not poem:
@@ -168,6 +183,7 @@ class GalleryService:
         excerpt: str | None,
         tags: list[str] | None,
     ) -> Poem:
+        """Apply supplied poem fields and return the updated serialized poem."""
         if self._use_memory:
             poem = self._memory_poems.get(poem_id)
             if not poem:
@@ -198,6 +214,7 @@ class GalleryService:
         return self._serialize_poem(poem)
 
     def delete_poem(self, poem_id: str) -> None:
+        """Delete a poem and remove associated in-memory records when applicable."""
         if self._use_memory:
             self._memory_poems.pop(poem_id, None)
             # remove associated comments + likes
@@ -214,6 +231,7 @@ class GalleryService:
         self._poems_table.delete_entity("poem", poem_id)
 
     def list_pending_comments(self) -> list[Comment]:
+        """Return comments that have not yet been approved."""
         if self._use_memory:
             return [
                 self._serialize_comment(comment)
@@ -227,6 +245,7 @@ class GalleryService:
         return [self._serialize_comment(dict(comment)) for comment in comments]
 
     def moderate_comment(self, comment_id: str, approved: bool) -> Comment:
+        """Set a comment's moderation state and return the updated comment."""
         if self._use_memory:
             comment = self._memory_comments[comment_id]
             comment["approved"] = approved
@@ -238,6 +257,7 @@ class GalleryService:
         return self._serialize_comment(dict(comment))
 
     def _with_approved_comments(self, poem: Mapping[str, Any]) -> Poem:
+        """Serialize a poem and attach its approved comments."""
         poem_id = poem["RowKey"]
         if self._use_memory:
             comments = [
@@ -255,6 +275,7 @@ class GalleryService:
         return serialized.model_copy(update={"comments": comments})
 
     def _serialize_poem(self, poem: Mapping[str, Any]) -> Poem:
+        """Convert a storage entity into the public poem model."""
         return Poem(
             id=poem["RowKey"],
             title=poem["title"],
@@ -266,6 +287,7 @@ class GalleryService:
         )
 
     def _serialize_comment(self, comment: Mapping[str, Any]) -> Comment:
+        """Convert a storage entity into the public comment model."""
         return Comment(
             id=comment["RowKey"],
             poem_id=comment["poem_id"],
@@ -283,6 +305,7 @@ class GalleryService:
         liked: bool,
         created_at: str | None,
     ) -> Like:
+        """Build the public result returned by a like operation."""
         return Like(
             id=like_id,
             poem_id=poem_id,
@@ -293,10 +316,12 @@ class GalleryService:
 
     @property
     def _use_memory(self) -> bool:
+        """Return whether persistent Azure Table storage is unavailable."""
         return not self.connection_string or AzureTableServiceClient is None
 
     @property
     def _poems_table(self) -> TableClient:
+        """Return the lazily initialized poems table client."""
         self._ensure_tables()
         if self._poems is None:
             raise RuntimeError("Poems table is not initialized.")
@@ -304,6 +329,7 @@ class GalleryService:
 
     @property
     def _comments_table(self) -> TableClient:
+        """Return the lazily initialized comments table client."""
         self._ensure_tables()
         if self._comments is None:
             raise RuntimeError("Comments table is not initialized.")
@@ -311,6 +337,7 @@ class GalleryService:
 
     @property
     def _likes_table(self) -> TableClient:
+        """Return the lazily initialized likes table client."""
         self._ensure_tables()
         if self._likes is None:
             raise RuntimeError("Likes table is not initialized.")
@@ -318,11 +345,13 @@ class GalleryService:
 
     @property
     def _merge_mode(self) -> Any:
+        """Return the Azure Table merge mode or fail when its SDK is unavailable."""
         if UpdateMode is None:
             raise RuntimeError("Azure Table Storage dependencies are not available.")
         return UpdateMode.MERGE
 
     def _ensure_tables(self) -> None:
+        """Create gallery tables and cache their clients on first persistent access."""
         if self._poems:
             return
         if AzureTableServiceClient is None:
@@ -338,4 +367,5 @@ class GalleryService:
         self._likes = service.get_table_client("GalleryLikes")
 
     def _now(self) -> str:
+        """Return the current UTC timestamp in ISO 8601 format."""
         return datetime.now(timezone.utc).isoformat()

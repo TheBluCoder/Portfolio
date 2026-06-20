@@ -48,6 +48,7 @@ _recent: list[RecentBook] = []
 
 
 def _entity_to_current(entity: dict[str, Any]) -> CurrentBook:
+    """Convert an Azure Table entity into the current-book response shape."""
     return {
         "title": str(entity.get("title", "")),
         "author": str(entity.get("author", "")),
@@ -59,6 +60,7 @@ def _entity_to_current(entity: dict[str, Any]) -> CurrentBook:
 
 
 def _entity_to_recent(entity: dict[str, Any]) -> RecentBook:
+    """Convert an Azure Table entity into a recently finished book."""
     return {
         "id": str(entity["RowKey"]),
         "title": str(entity.get("title", "")),

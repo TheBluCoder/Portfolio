@@ -1,9 +1,16 @@
+"""Generate portfolio-grounded chat responses with topic gating and retrieval."""
+
 import dotenv
 import json
 from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, Protocol
 
-from src.config.settings import GOOGLE_API_KEY, GEMINI_MODEL, PORTFOLIO_CONTEXT_INDEX
+from src.config.settings import (
+    CHAT_HISTORY_MAX_TURNS,
+    GEMINI_MODEL,
+    GOOGLE_API_KEY,
+    PORTFOLIO_CONTEXT_INDEX,
+)
 from src.config.log_config import setup_logging
 from src.config.prompts import SYSTEM_PROMPT
 from google import genai
@@ -12,15 +19,20 @@ from src.models.schemas import Message
 from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGateResult
 
 if TYPE_CHECKING:
-    from google.genai.chats import Chat
+    from google.genai.chats import AsyncChat
     from google.genai.types import ContentOrDict
 else:
-    Chat = Any
+    AsyncChat = Any
     ContentOrDict = Any
 
 
 logger = setup_logging(filename=__file__)
 dotenv.load_dotenv() # Load environment variables early
+
+ROUTING_USER_CHAR_LIMIT = 300
+ROUTING_ASSISTANT_CHAR_LIMIT = 240
+ROUTING_PROJECT_CHAR_LIMIT = 300
+ROUTING_MESSAGE_LIMIT = 4
 
 # --- LLM Configuration ---
 
@@ -34,15 +46,21 @@ generation_config = types.GenerateContentConfig(
 # --- Core Logic ---
 
 class ContextRetriever(Protocol):
+    """Required vector retrieval operations for the bot service."""
+
     def query_similar(self, index_name: str, query: str) -> Awaitable[Any]: ...
     def query_similar_namespaces(self, index_name: str, query: str) -> Awaitable[dict[str, Any]]: ...
 
 
 class QuestionGate(Protocol):
+    """Determine whether a question is within the portfolio's supported scope."""
+
     def check(self, question: str) -> Awaitable[TopicGateResult]: ...
 
 
 class BotService:
+    """Coordinate topic gating, context retrieval, and Gemini response generation."""
+
     def __init__(
         self,
         context_retriever: ContextRetriever,
@@ -54,6 +72,7 @@ class BotService:
         self.context_index = context_index
 
     async def generate_response(self, context: list[Message] | None = None) -> str:
+        """Generate a grounded response for the latest human message in a conversation."""
         latest_question = next(
             (msg.content for msg in reversed(context or []) if msg.type == "human"),
             "",
@@ -69,13 +88,19 @@ class BotService:
         history = build_chat_history(context)
 
         try:
-            chat: Chat = client.chats.create(
+            chat: AsyncChat = client.aio.chats.create(
                 model=GEMINI_MODEL,
                 config=generation_config,
                 history=history or None,
             )
-            response = chat.send_message(prompt)
-            logger.info("LLM response generated after deterministic retrieval.")
+            response = await chat.send_message(prompt)
+            usage = response.usage_metadata
+            logger.info(
+                "LLM response generated: prompt_tokens=%s cached_tokens=%s total_tokens=%s",
+                getattr(usage, "prompt_token_count", None),
+                getattr(usage, "cached_content_token_count", None),
+                getattr(usage, "total_token_count", None),
+            )
             return response.text if response.text else "No content in response."
 
         except Exception as e:
@@ -83,6 +108,7 @@ class BotService:
             return "An error occurred while generating the response."
 
     async def retrieve_context(self, question: str) -> dict[str, Any]:
+        """Retrieve matching context across namespaces without failing the chat request."""
         context: dict[str, Any] = {"index": self.context_index, "results": None}
 
         try:
@@ -100,6 +126,7 @@ def build_generation_prompt(
     retrieved_context: dict[str, Any],
     question: str,
 ) -> str:
+    """Build the final grounded prompt from retrieved notes and the user's question."""
     return (
         "Answer using only the private notes below. "
         "Speak about Ikeoluwa in third person as Ikeoluwa or Ike. "
@@ -118,12 +145,16 @@ def build_generation_prompt(
 
 
 def compact_context(retrieved_context: dict[str, Any]) -> str:
+    """Serialize retrieved context and cap its size before prompt construction."""
     return json.dumps(retrieved_context, default=str, ensure_ascii=False)[:8000]
 
 
 def build_routing_query(context: list[Message] | None, latest_question: str) -> str:
+    """Build compact declarative context for topic-gate embedding."""
+    current_question = " ".join(latest_question.split())
+    query_parts = [f"Current question: {current_question}"]
     if not context:
-        return latest_question
+        return query_parts[0]
 
     selected_project: str | None = None
     previous_turns: list[str] = []
@@ -132,25 +163,23 @@ def build_routing_query(context: list[Message] | None, latest_question: str) -> 
         if not content:
             continue
 
-        label = "User" if msg.type == "human" else "Assistant"
         if content.startswith("The user is viewing this project:"):
-            selected_project = f"Selected project: {content}"
+            selected_project = content[:ROUTING_PROJECT_CHAR_LIMIT]
             continue
-        previous_turns.append(f"{label}: {content}")
 
-    context_parts = ([selected_project] if selected_project else []) + previous_turns[-4:]
-    if not context_parts:
-        return latest_question
+        if msg.type == "human":
+            previous_turns.append(f"User: {content[:ROUTING_USER_CHAR_LIMIT]}")
+        else:
+            previous_turns.append(f"Assistant: {content[:ROUTING_ASSISTANT_CHAR_LIMIT]}")
 
-    recent_context = "\n".join(context_parts)
-    return (
-        f"{latest_question}\n\n"
-        "Use this recent chat/project context only to understand references in the question:\n"
-        f"{recent_context}"
-    )[:2400]
+    if selected_project:
+        query_parts.append(f"Selected project: {selected_project}")
+    query_parts.extend(previous_turns[-ROUTING_MESSAGE_LIMIT:])
+    return "\n".join(query_parts)
 
 
 def build_retrieval_query(context: list[Message] | None, latest_question: str) -> str:
+    """Add selected-project context to the query used for semantic retrieval."""
     selected_project = extract_selected_project_context(context)
     if not selected_project:
         return latest_question
@@ -163,6 +192,7 @@ def build_retrieval_query(context: list[Message] | None, latest_question: str) -
 
 
 def extract_selected_project_context(context: list[Message] | None) -> str:
+    """Return the synthetic selected-project message from a conversation, if present."""
     for msg in context or []:
         content = " ".join(msg.content.split())
         if content.startswith("The user is viewing this project:"):
@@ -170,11 +200,21 @@ def extract_selected_project_context(context: list[Message] | None) -> str:
     return ""
 
 
-def build_chat_history(context: list[Message] | None) -> list[ContentOrDict]:
+def build_chat_history(
+    context: list[Message] | None,
+    max_turns: int = CHAT_HISTORY_MAX_TURNS,
+) -> list[ContentOrDict]:
+    """Convert only the most recent completed turns into Gemini chat history."""
     history: list[ContentOrDict] = []
     seen_user_turn = False
+    completed_messages = list((context or [])[:-1])
 
-    for msg in (context or [])[:-1]:
+    if max_turns <= 0:
+        return history
+
+    completed_messages = completed_messages[-(max_turns * 2):]
+
+    for msg in completed_messages:
         if msg.type == "human":
             seen_user_turn = True
             history.append(types.UserContent(parts=[types.Part.from_text(text=msg.content)]))

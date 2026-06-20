@@ -1,3 +1,5 @@
+"""Manage Pinecone index lifecycle, document chunking, retrieval, and deletion."""
+
 import asyncio
 import concurrent.futures
 import functools
@@ -29,10 +31,14 @@ DEFAULT_NAMESPACE = ""
 
 
 class PineconeIndexStats(Protocol):
+    """Index metadata required after creation or lookup."""
+
     host: str
 
 
 class PineconeIndexAsyncContext(Protocol):
+    """Async context manager returned for a Pinecone index connection."""
+
     async def __aenter__(self) -> "PineconeIndex": ...
     async def __aexit__(
         self,
@@ -43,6 +49,8 @@ class PineconeIndexAsyncContext(Protocol):
 
 
 class PineconeIndex(Protocol):
+    """Subset of asynchronous index operations used by the service."""
+
     async def upsert_records(self, namespace: str, records: list[ChunkRecord]) -> None: ...
     async def delete(
         self,
@@ -62,6 +70,8 @@ class PineconeIndex(Protocol):
 
 
 class PineconeClient(Protocol):
+    """Subset of Pinecone client operations used by the service."""
+
     async def has_index(self, index_name: str) -> bool: ...
     async def create_index_for_model(
         self,
@@ -100,6 +110,8 @@ def ensure_initialized(func: Callable[..., Awaitable[T]]) -> Callable[..., Await
     return wrapper
 
 class PineconeService:
+    """Provide one shared asynchronous Pinecone client and chunking executor."""
+
     _instance: "PineconeService | None" = None
     _lock = asyncio.Lock()
     _initialized: bool
@@ -115,6 +127,7 @@ class PineconeService:
         return cls._instance
 
     async def initialize(self) -> 'PineconeService':
+        """Initialize the shared client and executor once, returning this service."""
         async with self._lock:
             if not self._initialized:
                 logger.info("Initializing PineconeService...")
@@ -134,10 +147,12 @@ class PineconeService:
 
     @property
     def is_initialized(self) -> bool:
+        """Return whether client resources are ready for use."""
         return self._initialized
 
     @property
     def _client(self) -> PineconeClient:
+        """Return the initialized client or fail fast when lifecycle setup was skipped."""
         if self.pc is None:
             raise RuntimeError("PineconeService is not initialized.")
         return self.pc
@@ -444,6 +459,7 @@ class PineconeService:
         tasks: list[tuple[Content, Awaitable[list[str]]]] = []
 
         def run_split(text_to_split: str) -> list[str]:
+            """Split one document inside the shared thread pool."""
             logger.debug(f"Running split_text in executor for text length: {len(text_to_split)}")
             chunks = splitter.split_text(text_to_split)
             logger.debug(f"split_text returned {len(chunks)} chunks")

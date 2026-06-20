@@ -1,3 +1,5 @@
+"""Classify whether chat questions are supported by the portfolio knowledge base."""
+
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -15,17 +17,23 @@ logger = setup_logging(filename="topic_gate")
 
 @dataclass(frozen=True)
 class TopicGateResult:
+    """Topic decision with the similarity score used to make it."""
+
     accepted: bool
     score: float
 
 
 class TopicVectorStore(Protocol):
+    """Vector-store operations required to score topic similarity."""
+
     def query_topic_similarity(self, query: str, index_name: str) -> Awaitable[float]: ...
     def query_similar(self, index_name: str, query: str) -> Awaitable[Any]: ...
     def extract_best_score(self, results: Any) -> float: ...
 
 
 class TopicGate:
+    """Accept questions whose best topic match meets the configured threshold."""
+
     def __init__(
         self,
         vector_store: TopicVectorStore,
@@ -37,6 +45,7 @@ class TopicGate:
         self.threshold = threshold
 
     async def check(self, question: str) -> TopicGateResult:
+        """Score a question and return a deterministic accept/reject decision."""
         if not question or not question.strip():
             return TopicGateResult(accepted=False, score=0.0)
 
@@ -58,6 +67,7 @@ class TopicGate:
 
 
 def summarize_matches(results: Any) -> list[dict[str, Any]]:
+    """Extract compact score and text previews from supported result shapes."""
     candidates = extract_candidates(results)
     summaries: list[dict[str, Any]] = []
 
@@ -91,12 +101,14 @@ def summarize_matches(results: Any) -> list[dict[str, Any]]:
 
 
 def scale_score(score: Any) -> float | None:
+    """Scale a raw similarity score for human-readable diagnostic logging."""
     if score is None:
         return None
     return float(score) * 100000
 
 
 def extract_candidates(results: Any) -> list[Any]:
+    """Return match candidates from dictionary or Pinecone SDK response objects."""
     if isinstance(results, dict):
         result_obj = results.get("result")
         result_hits = result_obj.get("hits") if isinstance(result_obj, dict) else None

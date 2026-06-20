@@ -1,3 +1,5 @@
+"""Load and normalize portfolio project metadata from selected GitHub repositories."""
+
 import asyncio
 import base64
 import json
@@ -12,6 +14,8 @@ logger = setup_logging(filename="github_service")
 
 
 class GitHubService:
+    """Read public portfolio repositories and their optional project metadata files."""
+
     api_base = "https://api.github.com"
     portfolio_metadata_path = ".github/project.json"
 
@@ -26,6 +30,7 @@ class GitHubService:
         self.token = token
 
     def _headers(self, accept: str = "application/vnd.github+json") -> dict[str, str]:
+        """Build GitHub API headers, including authentication when configured."""
         headers = {
             "Accept": accept,
             "User-Agent": "ikeoluwa-portfolio",
@@ -36,6 +41,7 @@ class GitHubService:
         return headers
 
     async def list_portfolio_projects(self) -> list[dict[str, Any]]:
+        """Return normalized projects from public, non-fork repositories with the topic."""
         repos = await self._get_json(
             f"{self.api_base}/users/{self.username}/repos?per_page=100&type=owner&sort=updated"
         )
@@ -51,6 +57,7 @@ class GitHubService:
         return projects
 
     async def get_repo_project_data(self, repo_name: str) -> list[dict[str, Any]]:
+        """Load project metadata as a consistently list-shaped result."""
         try:
             response = await self._get_json(
                 f"{self.api_base}/repos/{self.username}/{repo_name}/contents/{self.portfolio_metadata_path}"
@@ -64,6 +71,7 @@ class GitHubService:
         return parsed if isinstance(parsed, list) else [parsed]
 
     def is_selected_public_repo(self, repo: dict[str, Any]) -> bool:
+        """Return whether a repository is public, original, and tagged for the portfolio."""
         topics = repo.get("topics") or []
         return (
             not repo.get("private", True)
@@ -74,13 +82,18 @@ class GitHubService:
     def _normalize_project_entries(
         self, repo: dict[str, Any], project_data: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
+        """Normalize metadata entries, falling back to repository fields when empty."""
         entries = project_data or [{}]
         return [self._normalize_project(repo, entry) for entry in entries]
 
     def _normalize_project(self, repo: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
+        """Map repository and metadata aliases into the frontend project schema."""
         return {
             "name": data.get("name") or repo.get("name"),
             "description": data.get("description") or repo.get("description") or "",
+            "what": data.get("what") or "",
+            "why": data.get("why") or "",
+            "impact": data.get("impact") or "",
             "image": data.get("image") or data.get("cover_image") or "/placeholder-image.png",
             "video": data.get("video") or "",
             "demo": data.get("demo") or data.get("homepage") or repo.get("homepage") or "",
@@ -100,6 +113,7 @@ class GitHubService:
         }
 
     async def get_repo_readme(self, repo_name: str) -> str:
+        """Return decoded README text, or an empty string when none exists."""
         try:
             response = await self._get_json(
                 f"{self.api_base}/repos/{self.username}/{repo_name}/readme"
@@ -110,15 +124,18 @@ class GitHubService:
         return self._decode_github_file_content(response)
 
     def _decode_github_file_content(self, response: dict[str, Any]) -> str:
+        """Decode base64 content from a GitHub contents API response."""
         content = response.get("content", "")
         if not content:
             return ""
         return base64.b64decode(content).decode("utf-8")
 
     async def _get_json(self, url: str) -> Any:
+        """Run the blocking GitHub JSON request outside the event loop."""
         return await asyncio.to_thread(self._get_json_sync, url)
 
     def _get_json_sync(self, url: str) -> Any:
+        """Fetch JSON, translating an HTTP 404 into FileNotFoundError."""
         request = urllib.request.Request(url, headers=self._headers())
         try:
             with urllib.request.urlopen(request, timeout=10) as response:

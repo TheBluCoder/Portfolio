@@ -1,4 +1,3 @@
-# import uvicorn
 from contextlib import asynccontextmanager
 from time import perf_counter
 from typing import AsyncIterator

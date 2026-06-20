@@ -1,3 +1,5 @@
+"""Enforce fixed-window visitor limits with Azure Table or in-memory storage."""
+
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from typing import TYPE_CHECKING, Any, TypedDict, cast
@@ -22,15 +24,21 @@ except ImportError:  # pragma: no cover - exercised when Azure SDK is absent loc
 
 
 class RateLimitExceeded(Exception):
+    """Raised when a visitor exceeds the configured request limit."""
+
     pass
 
 
 class RateLimitRecord(TypedDict):
+    """Current fixed-window state for one visitor."""
+
     count: int
     expires_at: datetime
 
 
 class RateLimiter:
+    """Track hashed visitor identities using persistent storage when configured."""
+
     _memory_store: dict[str, RateLimitRecord] = {}
 
     def __init__(
@@ -47,16 +55,19 @@ class RateLimiter:
         self._table_client: TableClient | None = None
 
     def visitor_key(self, ip_address: str, user_agent: str) -> str:
+        """Hash an IP address and user agent into a storage-safe visitor key."""
         identity = f"{ip_address}|{user_agent}".encode("utf-8")
         return sha256(identity).hexdigest()
 
     def check(self, visitor_key: str) -> None:
+        """Consume one request in the active window or raise RateLimitExceeded."""
         if self.connection_string and AzureTableServiceClient is not None:
             self._check_azure_table(visitor_key)
             return
         self._check_memory(visitor_key)
 
     def _check_memory(self, visitor_key: str) -> None:
+        """Apply fixed-window limiting to process-local state."""
         now = datetime.now(timezone.utc)
         record = self._memory_store.get(visitor_key)
         if not record or now >= record["expires_at"]:
@@ -72,6 +83,7 @@ class RateLimiter:
         record["count"] += 1
 
     def _check_azure_table(self, visitor_key: str) -> None:
+        """Apply fixed-window limiting to an Azure Table entity."""
         now = datetime.now(timezone.utc)
         table = self._get_table_client()
         try:
@@ -104,11 +116,13 @@ class RateLimiter:
 
     @property
     def _merge_mode(self) -> Any:
+        """Return the Azure Table merge mode required for counter updates."""
         if UpdateMode is None:
             raise RuntimeError("Azure Table Storage dependencies are not available.")
         return UpdateMode.MERGE
 
     def _get_table_client(self) -> TableClient:
+        """Create the rate-limit table on demand and cache its client."""
         if self._table_client:
             return self._table_client
         if AzureTableServiceClient is None:

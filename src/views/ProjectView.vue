@@ -1,12 +1,18 @@
 <script setup>
-import fallbackProjects from '@/data/projects.json'
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, onUnmounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ExternalLinkIcon, GithubIcon } from 'lucide-vue-next'
+import { usePortfolioStore } from '@/stores/portfolio'
 
 const setActiveProjectChatContext = inject('setActiveProjectChatContext', () => {})
 const clearActiveProjectChatContext = inject('clearActiveProjectChatContext', () => {})
-const projects = ref(fallbackProjects)
-const selectedProjectName = ref(fallbackProjects[0]?.name || '')
+const portfolioStore = usePortfolioStore()
+const {
+  projects,
+  projectsLoading: loading,
+  projectsError: loadError,
+} = storeToRefs(portfolioStore)
+const selectedProjectName = ref('')
 const detailRef = ref(null)
 
 const selectedProject = computed(
@@ -107,20 +113,6 @@ const stackIconLabel = (item) => {
   return item?.name || item?.label || item?.icon || 'Technology'
 }
 
-const loadProjects = async () => {
-  const projectsUrl = import.meta.env.VITE_PROJECTS_URL || '/api/projects'
-  try {
-    const response = await fetch(projectsUrl)
-    if (!response.ok) throw new Error(`Project API responded with ${response.status}`)
-    const data = await response.json()
-    if (Array.isArray(data.projects) && data.projects.length > 0) {
-      projects.value = data.projects
-    }
-  } catch (error) {
-    console.warn('Using fallback projects:', error)
-  }
-}
-
 watch(
   projects,
   (projectList) => {
@@ -131,7 +123,7 @@ watch(
   { immediate: true },
 )
 
-onMounted(loadProjects)
+portfolioStore.loadProjects().catch(() => {})
 
 watch(
   selectedProject,
@@ -154,10 +146,20 @@ onUnmounted(() => {
       <aside class="pv-sidebar">
         <div class="pv-sidebar-header">
           <p class="section-label">// projects</p>
-          <span class="pv-count">{{ projects.length }}</span>
+          <span v-if="!loading" class="pv-count">{{ projects.length }}</span>
         </div>
 
-        <div class="pv-list">
+        <!-- Loading -->
+        <div v-if="loading" class="pv-list">
+          <div class="pv-fetch-note">
+            <span class="pv-fetch-dot"></span>
+            fetching from GitHub
+          </div>
+          <div v-for="i in 3" :key="i" class="pv-skeleton-card"></div>
+        </div>
+
+        <!-- Loaded -->
+        <div v-else class="pv-list">
           <button
             v-for="project in projects"
             :key="project.name"
@@ -174,8 +176,23 @@ onUnmounted(() => {
         </div>
       </aside>
 
+      <!-- ── Error state ── -->
+      <div v-if="loadError" class="pv-error">
+        <p class="pv-error-label">// error</p>
+        <p class="pv-error-msg">Couldn't reach GitHub right now.</p>
+        <a
+          href="https://github.com/TheBluCoder"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="pv-github-link"
+        >
+          <GithubIcon class="pv-btn-icon" />
+          View projects on GitHub
+        </a>
+      </div>
+
       <!-- ── Detail ── -->
-      <main v-if="selectedProject" ref="detailRef" class="pv-detail">
+      <main v-else-if="selectedProject" ref="detailRef" class="pv-detail">
         <div class="pv-detail-grid">
 
           <!-- ── Main column ── -->
@@ -625,6 +642,86 @@ onUnmounted(() => {
 .pv-empty {
   font-size: 0.875rem;
   color: #3e3c52;
+}
+
+/* ── Loading state ── */
+.pv-fetch-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+.pv-fetch-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8b7cf8;
+  flex-shrink: 0;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.pv-skeleton-card {
+  height: 74px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 25%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.02) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Error state ── */
+.pv-error {
+  padding: 2.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pv-error-label {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #3e3c52;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.pv-error-msg {
+  font-size: 0.9375rem;
+  color: #52506a;
+}
+.pv-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  text-decoration: none;
+  color: #9896b0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+.pv-github-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e0ddf5;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* ── Chat hint ── */

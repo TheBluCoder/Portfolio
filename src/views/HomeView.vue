@@ -1,5 +1,6 @@
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { inject } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   DownloadIcon,
   MessageCircleIcon,
@@ -13,26 +14,14 @@ import AboutSection from '@/components/home/AboutSection.vue'
 import ExperienceSection from '@/components/home/ExperienceSection.vue'
 import EducationSection from '@/components/home/EducationSection.vue'
 import SkillsSection from '@/components/home/SkillsSection.vue'
+import { usePortfolioStore } from '@/stores/portfolio'
 
 const resumeUrl = import.meta.env.VITE_RESUME_URL
-const apiBase = import.meta.env.VITE_API_BASE_URL
 const openChat = inject('openChat', () => { })
+const portfolioStore = usePortfolioStore()
+const { resumeData, resumeLoading, resumeError } = storeToRefs(portfolioStore)
 
-const resumeData = ref(null)
-const resumeLoading = ref(true)
-const resumeError = ref(false)
-
-onMounted(async () => {
-  try {
-    const res = await fetch(`${apiBase}/api/resume`)
-    if (!res.ok) throw new Error()
-    resumeData.value = await res.json()
-  } catch {
-    resumeError.value = true
-  } finally {
-    resumeLoading.value = false
-  }
-})
+portfolioStore.loadResume().catch(() => {})
 </script>
 
 <template>
