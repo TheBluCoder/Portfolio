@@ -4,8 +4,8 @@ import { storeToRefs } from 'pinia'
 import { ExternalLinkIcon, GithubIcon } from 'lucide-vue-next'
 import { usePortfolioStore } from '@/stores/portfolio'
 
-const setActiveProjectChatContext = inject('setActiveProjectChatContext', () => {})
-const clearActiveProjectChatContext = inject('clearActiveProjectChatContext', () => {})
+const setActiveProjectChatContext = inject('setActiveProjectChatContext', () => { })
+const clearActiveProjectChatContext = inject('clearActiveProjectChatContext', () => { })
 const portfolioStore = usePortfolioStore()
 const {
   projects,
@@ -123,7 +123,7 @@ watch(
   { immediate: true },
 )
 
-portfolioStore.loadProjects().catch(() => {})
+portfolioStore.loadProjects().catch(() => { })
 
 watch(
   selectedProject,
@@ -160,13 +160,8 @@ onUnmounted(() => {
 
         <!-- Loaded -->
         <div v-else class="pv-list">
-          <button
-            v-for="project in projects"
-            :key="project.name"
-            class="pv-item"
-            :class="{ 'pv-item--active': selectedProject?.name === project.name }"
-            @click="selectProject(project)"
-          >
+          <button v-for="project in projects" :key="project.name" class="pv-item"
+            :class="{ 'pv-item--active': selectedProject?.name === project.name }" @click="selectProject(project)">
             <div class="pv-item-top">
               <span class="pv-item-name">{{ project.name }}</span>
               <span class="pv-item-type">{{ project.type || 'project' }}</span>
@@ -180,12 +175,7 @@ onUnmounted(() => {
       <div v-if="loadError" class="pv-error">
         <p class="pv-error-label">// error</p>
         <p class="pv-error-msg">Couldn't reach GitHub right now.</p>
-        <a
-          href="https://github.com/TheBluCoder"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="pv-github-link"
-        >
+        <a href="https://github.com/TheBluCoder" target="_blank" rel="noopener noreferrer" class="pv-github-link">
           <GithubIcon class="pv-btn-icon" />
           View projects on GitHub
         </a>
@@ -206,41 +196,22 @@ onUnmounted(() => {
 
             <!-- Media -->
             <div class="pv-media">
-              <video
-                v-if="projectVideo?.type === 'direct'"
-                :src="projectVideo.source"
-                :poster="selectedProject.image"
-                class="pv-media-inner"
-                controls
-                preload="metadata"
-                playsinline
-              >Your browser does not support the video tag.</video>
-              <iframe
-                v-else-if="projectVideo?.type === 'embed'"
-                :src="projectVideo.source"
-                :title="`${selectedProject.name} demo`"
-                class="pv-media-inner"
+              <video v-if="projectVideo?.type === 'direct'" :src="projectVideo.source" :poster="selectedProject.image"
+                class="pv-media-inner" controls preload="metadata" playsinline>Your browser does not support the video
+                tag.</video>
+              <iframe v-else-if="projectVideo?.type === 'embed'" :src="projectVideo.source"
+                :title="`${selectedProject.name} demo`" class="pv-media-inner"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-              ></iframe>
-              <img
-                v-else
-                :src="selectedProject.image"
-                :alt="selectedProject.name"
-                class="pv-media-inner pv-media-img"
-                onerror="this.src='/placeholder-image.png'"
-              />
+                allowfullscreen></iframe>
+              <img v-else :src="selectedProject.image" :alt="selectedProject.name" class="pv-media-inner pv-media-img"
+                onerror="this.src='/placeholder-image.png'" />
             </div>
 
             <!-- Mobile-only: horizontal icon tiles right under media -->
             <div class="pv-tech-mobile">
               <div v-if="techStack.length" class="tech-tiles-h">
-                <div
-                  v-for="item in techStack"
-                  :key="stackIconLabel(item)"
-                  class="tech-tile-h"
-                  :title="stackIconLabel(item)"
-                >
+                <div v-for="item in techStack" :key="stackIconLabel(item)" class="tech-tile-h"
+                  :title="stackIconLabel(item)">
                   <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-h"></i>
                   <i v-else class="fa-solid fa-code tech-icon-h"></i>
                   <span class="tech-name-h">{{ stackIconLabel(item) }}</span>
@@ -254,23 +225,13 @@ onUnmounted(() => {
 
             <!-- Links -->
             <div class="pv-links">
-              <a
-                v-if="selectedProject.demo"
-                :href="selectedProject.demo"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="pv-btn pv-btn--primary"
-              >
+              <a v-if="selectedProject.demo" :href="selectedProject.demo" target="_blank" rel="noopener noreferrer"
+                class="pv-btn pv-btn--primary">
                 <ExternalLinkIcon class="pv-btn-icon" />
                 Live demo
               </a>
-              <a
-                v-if="selectedProject.source_code_url"
-                :href="selectedProject.source_code_url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="pv-btn pv-btn--ghost"
-              >
+              <a v-if="selectedProject.source_code_url" :href="selectedProject.source_code_url" target="_blank"
+                rel="noopener noreferrer" class="pv-btn pv-btn--ghost">
                 <GithubIcon class="pv-btn-icon" />
                 View code
               </a>
@@ -320,12 +281,8 @@ onUnmounted(() => {
             <p class="section-label">// how</p>
 
             <div v-if="techStack.length" class="tech-tiles-v">
-              <div
-                v-for="item in techStack"
-                :key="stackIconLabel(item)"
-                class="tech-tile-v"
-                :title="stackIconLabel(item)"
-              >
+              <div v-for="item in techStack" :key="stackIconLabel(item)" class="tech-tile-v"
+                :title="stackIconLabel(item)">
                 <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-v"></i>
                 <i v-else class="fa-solid fa-code tech-icon-v"></i>
                 <span class="tech-name-v">{{ stackIconLabel(item) }}</span>
@@ -464,6 +421,7 @@ onUnmounted(() => {
   line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -539,6 +497,7 @@ onUnmounted(() => {
   color: #fff;
   border: 1px solid #8b7cf8;
 }
+
 .pv-btn--primary:hover {
   background: #9d90fa;
   transform: translateY(-1px);
@@ -549,6 +508,7 @@ onUnmounted(() => {
   color: #9896b0;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .pv-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #e0ddf5;
@@ -655,6 +615,7 @@ onUnmounted(() => {
   letter-spacing: 0.06em;
   margin-bottom: 1rem;
 }
+
 .pv-fetch-dot {
   width: 6px;
   height: 6px;
@@ -663,26 +624,39 @@ onUnmounted(() => {
   flex-shrink: 0;
   animation: pulse-dot 1.4s ease-in-out infinite;
 }
+
 @keyframes pulse-dot {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
+
 .pv-skeleton-card {
   height: 74px;
   border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.02) 25%,
-    rgba(255, 255, 255, 0.04) 50%,
-    rgba(255, 255, 255, 0.02) 75%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.02) 25%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0.02) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
+
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ── Error state ── */
@@ -692,6 +666,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 0.75rem;
 }
+
 .pv-error-label {
   font-family: ui-monospace, monospace;
   font-size: 0.6875rem;
@@ -699,10 +674,12 @@ onUnmounted(() => {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
 .pv-error-msg {
   font-size: 0.9375rem;
   color: #52506a;
 }
+
 .pv-github-link {
   display: inline-flex;
   align-items: center;
@@ -718,6 +695,7 @@ onUnmounted(() => {
   align-self: flex-start;
   margin-top: 0.25rem;
 }
+
 .pv-github-link:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #e0ddf5;
@@ -798,16 +776,22 @@ onUnmounted(() => {
   cursor: default;
   transition: background 0.15s, border-color 0.15s;
 }
+
 .tech-tile-h:hover {
   background: rgba(139, 124, 248, 0.08);
   border-color: rgba(139, 124, 248, 0.2);
 }
+
 .tech-icon-h {
   font-size: 1.125rem;
   color: #7a7888;
   transition: color 0.15s;
 }
-.tech-tile-h:hover .tech-icon-h { color: #b5aef8; }
+
+.tech-tile-h:hover .tech-icon-h {
+  color: #b5aef8;
+}
+
 .tech-name-h {
   font-size: 0.5625rem;
   color: #52506a;
@@ -817,7 +801,10 @@ onUnmounted(() => {
   max-width: 56px;
   transition: color 0.15s;
 }
-.tech-tile-h:hover .tech-name-h { color: #9896b0; }
+
+.tech-tile-h:hover .tech-name-h {
+  color: #9896b0;
+}
 
 .deploy-row-h {
   display: flex;
@@ -826,7 +813,9 @@ onUnmounted(() => {
   gap: 0.375rem;
 }
 
-.pv-tech-col { display: none; }
+.pv-tech-col {
+  display: none;
+}
 
 /* Desktop: vertical icon column, mobile strip hidden */
 @media (min-width: 1024px) {
@@ -837,7 +826,9 @@ onUnmounted(() => {
     align-items: start;
   }
 
-  .pv-tech-mobile { display: none; }
+  .pv-tech-mobile {
+    display: none;
+  }
 
   .pv-tech-col {
     display: block;
@@ -866,6 +857,7 @@ onUnmounted(() => {
     text-align: center;
     transition: background 0.15s, border-color 0.15s;
   }
+
   .tech-tile-v:hover {
     background: rgba(139, 124, 248, 0.08);
     border-color: rgba(139, 124, 248, 0.2);
@@ -876,7 +868,10 @@ onUnmounted(() => {
     color: #7a7888;
     transition: color 0.15s;
   }
-  .tech-tile-v:hover .tech-icon-v { color: #b5aef8; }
+
+  .tech-tile-v:hover .tech-icon-v {
+    color: #b5aef8;
+  }
 
   .tech-name-v {
     font-size: 0.5625rem;
@@ -885,7 +880,10 @@ onUnmounted(() => {
     word-break: break-word;
     transition: color 0.15s;
   }
-  .tech-tile-v:hover .tech-name-v { color: #9896b0; }
+
+  .tech-tile-v:hover .tech-name-v {
+    color: #9896b0;
+  }
 
   .deploy-label-v {
     font-family: ui-monospace, monospace;
