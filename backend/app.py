@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.config.log_config import configure_logging, setup_logging
+from src.config.settings import CORS_ALLOWED_ORIGINS
 from src.dependencies import get_pinecone_service
 from src.routes import chat, health, projects, gallery, resume, admin_pinecone, reading
 
@@ -32,14 +33,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 
-# Add CORS middleware
+# Allow only configured frontend origins to call the API from browsers.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origin
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if CORS_ALLOWED_ORIGINS:
+    logger.info("Configured CORS allowed origins: %s", CORS_ALLOWED_ORIGINS)
+else:
+    logger.warning(
+        "No CORS_ALLOWED_ORIGINS configured. Browser requests from other origins will be blocked."
+    )
 
 
 @app.middleware("http")

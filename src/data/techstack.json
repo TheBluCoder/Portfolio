@@ -94,7 +94,7 @@
                 "icon": "fa-solid fa-server"
             },
             {
-                "name": "Azure Functions",
+                "name": "Azure Container Apps",
                 "icon": "fa-solid fa-bolt-lightning"
             },
             {

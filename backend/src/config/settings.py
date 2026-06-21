@@ -5,6 +5,13 @@ from pinecone import ServerlessSpec
 # Load environment variables
 load_dotenv()
 
+
+def _parse_origins(raw_value: str | None) -> list[str]:
+    """Parse a comma-separated origin list and normalize trailing slashes."""
+    if not raw_value:
+        return []
+    return [origin.strip().rstrip("/") for origin in raw_value.split(",") if origin.strip()]
+
 # API Keys and Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-lite"
@@ -25,6 +32,7 @@ TOPIC_GATE_INDEX = os.getenv("TOPIC_GATE_INDEX", "questions")
 PORTFOLIO_CONTEXT_INDEX = os.getenv("PORTFOLIO_CONTEXT_INDEX", "portfolio")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 RESUME_URL = os.getenv("RESUME_URL")
+CORS_ALLOWED_ORIGINS = _parse_origins(os.getenv("CORS_ALLOWED_ORIGINS"))
 
 PINECONE_SPEC = ServerlessSpec(
     cloud="aws",

@@ -1,10 +1,10 @@
 [
   {
     "name": "Personal Portfolio",
-    "description": "A Vue 3 portfolio site with a context-aware AI chatbot — RAG pipeline using Pinecone vector search and Google Gemini, backed by a FastAPI service on Azure Functions.",
-    "what": "This portfolio is the full-stack project behind the site you're on right now. The frontend is a <b>Vue 3</b> SPA built with Vite and Tailwind CSS — it has sections for projects, a gallery of poems, a dynamically-parsed resume, and an AI chatbot on every page. The backend is a <b>Python FastAPI</b> service deployed on <b>Azure Functions</b> that handles the chat API, project ingestion, gallery CRUD, and resume parsing. The most technically involved part is the chatbot: it uses a <b>RAG pipeline</b> with Pinecone for vector search and Google Gemini for generation, gated by a topic filter so only relevant questions reach the retrieval step. Every GitHub repo tagged <b>portfolio</b> is automatically indexed into Pinecone via a webhook, so the bot always has up-to-date context about every project.",
-    "why": "I wanted a portfolio that could actually represent how I think about software — not just a list of projects with screenshots, but something that could hold a conversation about them. Building the site itself became the most honest demonstration of what I can do.",
-    "impact": "The portfolio is live and serves as my primary professional presence. The chatbot answers questions about my work from people exploring the site, and the GitHub ingestion pipeline means every new project I tag is automatically searchable through it.",
+    "description": "A Vue 3 portfolio site with a context-aware AI chatbot - a RAG pipeline using Pinecone vector search and Google Gemini, backed by a FastAPI service on Azure Container Apps.",
+    "what": "This portfolio is the full-stack project behind the site. The frontend is a <b>Vue 3</b> SPA built with Vite and Tailwind CSS - it includes project browsing, a gallery, a dynamically parsed resume, and an AI chatbot on every page. The backend is a <b>Python FastAPI</b> service deployed on <b>Azure Container Apps</b> that handles the chat API, project ingestion, gallery CRUD, and resume parsing. The chatbot uses a <b>RAG pipeline</b> with Pinecone for vector search and Google Gemini for generation, gated by a topic filter so only relevant questions reach retrieval. Every GitHub repository tagged <b>portfolio</b> can be automatically indexed through a webhook-driven ingestion flow.",
+    "why": "I wanted a portfolio that could actually represent how I think about software - not just a list of projects with screenshots, but something that could hold a conversation about them. Building the site itself became the most honest demonstration of what I can do.",
+    "impact": "The portfolio is live and serves as my primary professional presence. The chatbot answers questions about my work, and the GitHub ingestion pipeline means new tagged projects can become searchable through it automatically.",
     "image": "",
     "video": "",
     "demo": "",
@@ -17,6 +17,6 @@
       { "name": "Pinecone", "icon": "fa-solid fa-database" },
       { "name": "Tailwind CSS", "icon": "fa-brands fa-css3-alt" }
     ],
-    "deployment_stack": ["Azure Functions", "Azure Table Storage"]
+    "deployment_stack": ["Azure Container Apps", "Azure Table Storage"]
   }
 ]
