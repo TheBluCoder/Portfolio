@@ -1,6 +1,6 @@
 # Personal Portfolio - Ikeoluwa Oladele
 
-A personal portfolio site with a context-aware AI chatbot built into every page. The frontend is a Vue 3 SPA; the backend is a Python FastAPI service deployed on Azure Container Apps that handles chat, project data, resume parsing, and a small gallery.
+A personal portfolio site with a context-aware AI chatbot built into every page. The frontend is a Vue 3 SPA; the backend is a Python FastAPI service deployed on Azure App Service for Containers that handles chat, project data, resume parsing, and a small gallery.
 
 Live: <!-- add your URL here -->  
 Source: [github.com/TheBluCoder/portfolio](https://github.com/TheBluCoder/portfolio)
@@ -47,7 +47,7 @@ Routes: `/`, `/introduction`, `/about`, `/projects`, `/gallery`, `/resume`
 
 ### Backend (`backend/`)
 
-Python 3.11, FastAPI, Azure Container Apps
+Python 3.11, FastAPI, Azure App Service for Containers
 
 The FastAPI app runs locally with Uvicorn and is packaged as a container for deployment.
 
@@ -78,7 +78,7 @@ Rate limiting:
 | Backend | Python 3.11, FastAPI, Pydantic |
 | AI / Search | Google Gemini, Pinecone |
 | Storage | Azure Table Storage |
-| Deployment | Azure Container Apps (backend), Vercel (frontend) |
+| Deployment | Azure App Service for Containers (backend), Vercel (frontend) |
 
 ---
 
