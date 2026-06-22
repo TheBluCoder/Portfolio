@@ -37,3 +37,6 @@ coverage
 *.sh
 *.pyc
 __pycache__/
+
+# Local-only project context payloads
+.github/context.json
