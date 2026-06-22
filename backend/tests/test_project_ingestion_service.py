@@ -92,18 +92,18 @@ class ProjectIngestionServiceTests(unittest.IsolatedAsyncioTestCase):
             text="Extra project detail not in README.",
         )
 
-        self.assertEqual(result["namespace"], "github:theblucoder:demo")
+        self.assertEqual(result["namespace"], "github:theblucoder:demo:manual")
         self.assertEqual(result["document_id"], "manual-architecture-note")
         vector_store.delete_records_by_prefix.assert_awaited_once_with(
             "portfolio-context",
-            "github:theblucoder:demo",
+            "github:theblucoder:demo:manual",
             "manual-architecture-note_chunk_",
         )
         vector_store.upsert_documents.assert_awaited_once()
         index_name, documents = vector_store.upsert_documents.await_args.args
         kwargs = vector_store.upsert_documents.await_args.kwargs
         self.assertEqual(index_name, "portfolio-context")
-        self.assertEqual(kwargs["namespace"], "github:theblucoder:demo")
+        self.assertEqual(kwargs["namespace"], "github:theblucoder:demo:manual")
         self.assertIn("Extra project detail not in README.", documents[0].text)
 
 
