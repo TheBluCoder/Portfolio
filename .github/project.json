@@ -5,7 +5,7 @@
     "what": "This portfolio is the full-stack project behind the site. The frontend is a <b>Vue 3</b> SPA built with Vite and Tailwind CSS. it includes project browsing, a gallery, a dynamically parsed resume, and an AI chatbot on every page. The backend is a <b>Python FastAPI</b> service deployed on <b>Azure App Service for Containers</b> that handles the chat API, project ingestion, gallery CRUD, and resume parsing. The chatbot uses a <b>RAG pipeline</b> with Pinecone for vector search and Google Gemini for generation, gated by a topic filter so only relevant questions reach retrieval. Every GitHub repository tagged <b>portfolio</b> can be automatically indexed through a webhook-driven ingestion flow.",
     "why": "I wanted a portfolio that could actually represent how I think about software - not just a list of projects with screenshots, but something that could hold a conversation about them. Building the site itself became the most honest demonstration of what I can do.",
     "impact": "The portfolio is live and serves as my primary professional presence. The chatbot answers questions about my work, and the GitHub ingestion pipeline means new tagged projects can become searchable through it automatically.",
-    "image": "https://drive.google.com/file/d/1Ri9QyDx1SeZSh9kF1edi6zTPG_HpHxjP/view?usp=sharing",
+    "image": "https://res.cloudinary.com/dao2elffs/image/upload/v1782150974/Screenshot_2026-06-22_134953_zik92l.png",
     "video": "",
     "demo": "",
     "type": "website",
