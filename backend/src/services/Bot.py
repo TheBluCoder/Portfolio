@@ -1,4 +1,4 @@
-"""Generate portfolio-grounded chat responses with topic gating and retrieval."""
+"""Generate portfolio-grounded chat responses with relevance resolution and retrieval."""
 
 import dotenv
 from collections.abc import Awaitable
@@ -10,9 +10,15 @@ from src.config.log_config import setup_logging
 from src.config.prompts import SYSTEM_PROMPT
 from src.config.settings import GEMINI_MODEL, GOOGLE_API_KEY, PORTFOLIO_CONTEXT_INDEX
 from src.models.schemas import Message
-from src.services.chat_follow_up import ChatFollowUpResolver, clamp_user_message
+from src.services.chat_context import clamp_user_message
 from src.services.chat_prompting import ChatPromptBuilder
-from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGateResult
+from src.services.chat_resolver import ChatResolver
+
+OFF_TOPIC_RESPONSE = (
+    "Tiny detour detected. I’m best at questions about Ikeoluwa, his projects, "
+    "skills, experience, education, interests, and portfolio. Ask me anything in that lane "
+    "and I’ll happily put on the tiny detective hat."
+)
 
 if TYPE_CHECKING:
     from google.genai.chats import AsyncChat
@@ -38,27 +44,19 @@ class ContextRetriever(Protocol):
     def query_similar_namespaces(self, index_name: str, query: str) -> Awaitable[dict[str, Any]]: ...
 
 
-class QuestionGate(Protocol):
-    """Determine whether a question is within the portfolio's supported scope."""
-
-    def check(self, question: str) -> Awaitable[TopicGateResult]: ...
-
-
 class BotService:
-    """Coordinate topic gating, context retrieval, and Gemini response generation."""
+    """Coordinate chat relevance resolution, context retrieval, and Gemini responses."""
 
     def __init__(
         self,
         context_retriever: ContextRetriever,
-        topic_gate: QuestionGate,
         prompt_builder: ChatPromptBuilder,
-        follow_up_resolver: ChatFollowUpResolver,
+        chat_resolver: ChatResolver,
         context_index: str = PORTFOLIO_CONTEXT_INDEX,
     ) -> None:
         self.context_retriever = context_retriever
-        self.topic_gate = topic_gate
         self.prompt_builder = prompt_builder
-        self.follow_up_resolver = follow_up_resolver
+        self.chat_resolver = chat_resolver
         self.context_index = context_index
 
     async def generate_response(self, context: list[Message] | None = None) -> str:
@@ -68,25 +66,19 @@ class BotService:
             "",
         )
         latest_question = clamp_user_message(latest_question)
-        gate_query = self.prompt_builder.build_topic_gate_query(latest_question)
-        gate_result = await self.topic_gate.check(gate_query)
-        resolved_query = latest_question
 
-        if not gate_result.accepted:
-            follow_up_query = self.follow_up_resolver.resolve(context, latest_question)
-            if not follow_up_query:
-                return OFF_TOPIC_RESPONSE
-
-            follow_up_result = await self.topic_gate.check(follow_up_query)
-            if not follow_up_result.accepted:
-                return OFF_TOPIC_RESPONSE
-
-            resolved_query = follow_up_query
+        try:
+            resolution = await self.chat_resolver.resolve(context, latest_question)
+        except Exception as e:
+            logger.error("Error resolving chat relevance: %s", e, exc_info=True)
+            return "An error occurred while understanding the message."
+        if not resolution.relevant:
+            return OFF_TOPIC_RESPONSE
 
         retrieval_query = self.prompt_builder.build_retrieval_query(
             context,
             latest_question,
-            resolved_query,
+            resolution.standalone_question,
         )
         retrieved_context = await self.retrieve_context(retrieval_query)
         prompt = self.prompt_builder.build_generation_prompt(retrieved_context, latest_question)

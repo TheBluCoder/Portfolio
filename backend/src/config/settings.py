@@ -27,8 +27,6 @@ RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "12"))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_TO_FILE = os.getenv("LOG_TO_FILE", "false").lower() == "true"
 LOG_DIR = os.getenv("LOG_DIR", "logs")
-TOPIC_GATE_THRESHOLD = float(os.getenv("TOPIC_GATE_THRESHOLD", "0.00005"))
-TOPIC_GATE_INDEX = os.getenv("TOPIC_GATE_INDEX", "questions")
 PORTFOLIO_CONTEXT_INDEX = os.getenv("PORTFOLIO_CONTEXT_INDEX", "portfolio")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 RESUME_URL = os.getenv("RESUME_URL")

@@ -7,7 +7,7 @@ from google.genai import types
 
 from src.config.settings import CHAT_HISTORY_MAX_TURNS
 from src.models.schemas import Message
-from src.services.chat_follow_up import clamp_user_message, extract_selected_project_context
+from src.services.chat_context import extract_selected_project_context
 
 if TYPE_CHECKING:
     from google.genai.types import ContentOrDict
@@ -16,11 +16,7 @@ else:
 
 
 class ChatPromptBuilder:
-    """Create topic-gate queries, retrieval queries, prompts, and history."""
-
-    def build_topic_gate_query(self, latest_question: str) -> str:
-        current_question = " ".join(clamp_user_message(latest_question).split())
-        return f"Current question: {current_question}"
+    """Create retrieval queries, generation prompts, and Gemini chat history."""
 
     def build_retrieval_query(
         self,

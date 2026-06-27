@@ -410,38 +410,6 @@ class PineconeService:
         return deleted_count
 
     @ensure_initialized
-    async def query_topic_similarity(self, query: str, index_name: str) -> float:
-        """Return the best topic-match score for a query against a topic index."""
-        results = await self.query_similar(index_name, query, top_k=3, top_n=1)
-        return self.extract_best_score(results)
-
-    def extract_best_score(self, results: Any) -> float:
-        """Extract the best score from Pinecone search results with SDK-shape tolerance."""
-        candidates: list[Any]
-        if isinstance(results, dict):
-            result_obj = results.get("result")
-            result_hits = result_obj.get("hits") if isinstance(result_obj, dict) else None
-            raw_candidates = results.get("matches") or result_hits or results.get("hits") or []
-        else:
-            raw_candidates = (
-                getattr(results, "matches", None)
-                or getattr(getattr(results, "result", None), "hits", None)
-                or getattr(results, "hits", None)
-                or []
-            )
-        candidates = list(raw_candidates) if isinstance(raw_candidates, list) else []
-
-        scores: list[float] = []
-        for candidate in candidates:
-            if isinstance(candidate, dict):
-                raw_score = candidate.get("score") or candidate.get("_score")
-            else:
-                raw_score = getattr(candidate, "score", None) or getattr(candidate, "_score", None)
-            if raw_score is not None:
-                scores.append(float(raw_score))
-        return max(scores, default=0.0)
-
-    @ensure_initialized
     async def chunk_documents(
         self,
         documents: list[Content],
