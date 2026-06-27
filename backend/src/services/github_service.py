@@ -8,7 +8,14 @@ import urllib.request
 from typing import Any
 
 from src.config.log_config import setup_logging
-from src.config.settings import GITHUB_PROJECT_TOPIC, GITHUB_TOKEN, GITHUB_USERNAME
+from src.config.settings import (
+    GITHUB_PROJECT_TOPIC,
+    GITHUB_REPOS_PER_PAGE,
+    GITHUB_REPOS_SORT,
+    GITHUB_REPOS_TYPE,
+    GITHUB_TOKEN,
+    GITHUB_USERNAME,
+)
 
 logger = setup_logging(filename="github_service")
 
@@ -43,7 +50,8 @@ class GitHubService:
     async def list_portfolio_projects(self) -> list[dict[str, Any]]:
         """Return normalized projects from public, non-fork repositories with the topic."""
         repos = await self._get_json(
-            f"{self.api_base}/users/{self.username}/repos?per_page=100&type=owner&sort=updated"
+            f"{self.api_base}/users/{self.username}/repos"
+            f"?per_page={GITHUB_REPOS_PER_PAGE}&type={GITHUB_REPOS_TYPE}&sort={GITHUB_REPOS_SORT}"
         )
         projects = []
         for repo in repos:
