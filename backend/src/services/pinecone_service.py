@@ -351,6 +351,9 @@ class PineconeService:
         if not candidates:
             return []
 
+        if len(candidates) <= top_n:
+            return sorted(candidates, key=lambda c: c["_score"], reverse=True)[:top_n]
+
         try:
             reranked = await self._client.inference.rerank(
                 model="pinecone-rerank-v0",
