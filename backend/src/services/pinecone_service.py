@@ -4,6 +4,7 @@ import asyncio
 import concurrent.futures
 import functools
 import os
+import time
 from collections.abc import Awaitable
 from types import TracebackType
 from typing import Any, Protocol, TypeAlias, TypeVar, cast
@@ -11,14 +12,15 @@ from typing import Any, Protocol, TypeAlias, TypeVar, cast
 from pinecone import PineconeAsyncio, SearchQuery, SearchRerank, IndexEmbed  # pyright: ignore[reportMissingTypeStubs]
 from pinecone.openapi_support.exceptions import NotFoundException
 from src.config.settings import (
-    PINECONE_API_KEY, 
+    PINECONE_API_KEY,
     DEFAULT_CHUNK_WORKERS,
     PINECONE_BATCH_SIZE,
     PINECONE_CHUNK_SIZE,
     PINECONE_CHUNK_OVERLAP,
     PINECONE_QUERY_TOP_K,
     PINECONE_QUERY_TOP_N,
-    PINECONE_INDEX_TIMEOUT
+    PINECONE_INDEX_TIMEOUT,
+    PINECONE_NAMESPACE_CACHE_TTL,
 )
 from src.config.log_config import setup_logging
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -119,6 +121,7 @@ class PineconeService:
     pc: PineconeClient | None
     chunking_executor: concurrent.futures.ThreadPoolExecutor | None
     _host_cache: dict[str, str]
+    _namespace_cache: dict[str, tuple[list[str], float]]
     
     def __new__(cls) -> "PineconeService":
         if cls._instance is None:
@@ -127,6 +130,7 @@ class PineconeService:
             cls._instance.chunking_executor = None
             cls._instance._initialized = False
             cls._instance._host_cache = {}
+            cls._instance._namespace_cache = {}
         return cls._instance
 
     async def initialize(self) -> 'PineconeService':
@@ -256,6 +260,7 @@ class PineconeService:
                     f"Upsert incomplete for index '{index_name}' namespace '{namespace}': "
                     f"{upserted_count}/{total_chunks} chunks upserted."
                 )
+        self._invalidate_namespace_cache(index_name)
 
     @ensure_initialized
     async def query_similar(
@@ -364,7 +369,13 @@ class PineconeService:
 
     @ensure_initialized
     async def list_namespaces(self, index_name: str) -> list[str]:
-        """List namespaces present in an index using index stats."""
+        """List namespaces present in an index, cached for PINECONE_NAMESPACE_CACHE_TTL seconds."""
+        cached = self._namespace_cache.get(index_name)
+        if cached is not None:
+            namespaces, ts = cached
+            if time.monotonic() - ts < PINECONE_NAMESPACE_CACHE_TTL:
+                return namespaces
+
         host = await self.get_or_create_index(index_name)
         async with self._client.IndexAsyncio(host=host) as index:
             stats = await index.describe_index_stats()
@@ -372,9 +383,13 @@ class PineconeService:
         raw_namespaces = getattr(stats, "namespaces", None)
         if raw_namespaces is None and isinstance(stats, dict):
             raw_namespaces = stats.get("namespaces")
-        if isinstance(raw_namespaces, dict):
-            return list(raw_namespaces.keys())
-        return [DEFAULT_NAMESPACE]
+        namespaces = list(raw_namespaces.keys()) if isinstance(raw_namespaces, dict) else [DEFAULT_NAMESPACE]
+        self._namespace_cache[index_name] = (namespaces, time.monotonic())
+        return namespaces
+
+    def _invalidate_namespace_cache(self, index_name: str) -> None:
+        """Drop the namespace cache for an index after a write that may add or remove namespaces."""
+        self._namespace_cache.pop(index_name, None)
 
     @ensure_initialized
     async def upsert_single_record(
@@ -391,6 +406,7 @@ class PineconeService:
         async with self._client.IndexAsyncio(host=host) as index:
             await index.upsert_records(namespace=namespace, records=[{"id": rid, "text": text}])
         logger.info("Upserted single record '%s' to index '%s' ns '%s'", rid, index_name, namespace)
+        self._invalidate_namespace_cache(index_name)
         return rid
 
     @ensure_initialized
@@ -420,6 +436,7 @@ class PineconeService:
                     namespace,
                     index_name,
                 )
+        self._invalidate_namespace_cache(index_name)
 
     @ensure_initialized
     async def delete_records_by_prefix(
