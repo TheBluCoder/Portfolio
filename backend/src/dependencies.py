@@ -3,6 +3,8 @@ from functools import lru_cache
 from fastapi import Depends
 
 from src.services import Bot
+from src.services.chat_follow_up import ChatFollowUpResolver
+from src.services.chat_prompting import ChatPromptBuilder
 from src.services.gallery_service import GalleryService
 from src.services.github_service import GitHubService
 from src.services.pinecone_service import PineconeService
@@ -37,13 +39,27 @@ def get_topic_gate(
     return TopicGate(vector_store=pinecone_service)
 
 
+@lru_cache
+def get_chat_prompt_builder() -> ChatPromptBuilder:
+    return ChatPromptBuilder()
+
+
+@lru_cache
+def get_chat_follow_up_resolver() -> ChatFollowUpResolver:
+    return ChatFollowUpResolver()
+
+
 def get_bot_service(
     pinecone_service: PineconeService = Depends(get_pinecone_service),
     topic_gate: TopicGate = Depends(get_topic_gate),
+    prompt_builder: ChatPromptBuilder = Depends(get_chat_prompt_builder),
+    follow_up_resolver: ChatFollowUpResolver = Depends(get_chat_follow_up_resolver),
 ) -> Bot.BotService:
     return Bot.BotService(
         context_retriever=pinecone_service,
         topic_gate=topic_gate,
+        prompt_builder=prompt_builder,
+        follow_up_resolver=follow_up_resolver,
     )
 
 
