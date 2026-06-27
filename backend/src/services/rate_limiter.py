@@ -18,9 +18,11 @@ else:
 try:
     from azure.data.tables import TableServiceClient as AzureTableServiceClient
     from azure.data.tables import UpdateMode
+    from azure.core.exceptions import ResourceNotFoundError as AzureResourceNotFoundError
 except ImportError:  # pragma: no cover - exercised when Azure SDK is absent locally
     AzureTableServiceClient = None
     UpdateMode = None
+    AzureResourceNotFoundError = type("AzureResourceNotFoundError", (Exception,), {})
 
 
 class RateLimitExceeded(Exception):
@@ -39,8 +41,6 @@ class RateLimitRecord(TypedDict):
 class RateLimiter:
     """Track hashed visitor identities using persistent storage when configured."""
 
-    _memory_store: dict[str, RateLimitRecord] = {}
-
     def __init__(
         self,
         table_name: str = "RateLimits",
@@ -53,6 +53,7 @@ class RateLimiter:
         self.window_seconds = window_seconds
         self.connection_string = connection_string
         self._table_client: TableClient | None = None
+        self._memory_store: dict[str, RateLimitRecord] = {}
 
     def visitor_key(self, ip_address: str, user_agent: str) -> str:
         """Hash an IP address and user agent into a storage-safe visitor key."""
@@ -91,7 +92,7 @@ class RateLimiter:
                 dict[str, Any],
                 table.get_entity(partition_key="chat", row_key=visitor_key),
             )
-        except Exception:
+        except AzureResourceNotFoundError:
             entity: dict[str, Any] = {
                 "PartitionKey": "chat",
                 "RowKey": visitor_key,

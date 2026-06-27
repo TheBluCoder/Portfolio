@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os
-from pinecone import ServerlessSpec
 
 # Load environment variables
 load_dotenv()
@@ -34,11 +33,6 @@ PORTFOLIO_CONTEXT_INDEX = os.getenv("PORTFOLIO_CONTEXT_INDEX", "portfolio")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 RESUME_URL = os.getenv("RESUME_URL")
 CORS_ALLOWED_ORIGINS = _parse_origins(os.getenv("CORS_ALLOWED_ORIGINS"))
-
-PINECONE_SPEC = ServerlessSpec(
-    cloud="aws",
-    region="us-east-1"
-)
 
 # Pinecone Service Configuration
 DEFAULT_CHUNK_WORKERS = 4

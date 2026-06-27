@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from time import perf_counter
 from typing import AsyncIterator
@@ -5,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from src.config.log_config import configure_logging, setup_logging
 from src.config.settings import CORS_ALLOWED_ORIGINS
@@ -51,7 +52,7 @@ else:
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     request_id = request.headers.get("x-request-id") or str(uuid4())
     request.state.request_id = request_id
     start_time = perf_counter()

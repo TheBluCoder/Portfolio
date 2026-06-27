@@ -26,7 +26,7 @@ class Message(BaseModel):
         return self
 
 class ChatRequest(BaseModel):
-    context: list[Message] = None
+    context: list[Message] | None = None
 
 
 class HealthResponse(BaseModel):

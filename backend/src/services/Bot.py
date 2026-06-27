@@ -70,8 +70,9 @@ class BotService:
         latest_question = clamp_user_message(latest_question)
 
         # Build fetch query synchronously — no network call needed
+        # resolved_question == latest_question here: resolver hasn't run yet
         fetch_query = self.prompt_builder.build_retrieval_query(
-            context, latest_question, latest_question,
+            context, latest_question, resolved_question=latest_question,
         )
         namespaces = self._extract_project_namespaces(context)
 
