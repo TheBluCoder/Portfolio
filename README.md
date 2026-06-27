@@ -11,11 +11,26 @@ Source: [github.com/TheBluCoder/portfolio](https://github.com/TheBluCoder/portfo
 
 The chat panel on every page is backed by a retrieval-augmented generation pipeline:
 
-1. **Topic gate** - Before doing anything expensive, the query is scored against a Pinecone index seeded with representative questions. Low-scoring queries are rejected with a polite portfolio-only reply.
-2. **Retrieval** - If the query passes the gate, the backend searches a Pinecone index containing chunked README and project metadata from tagged portfolio repositories.
-3. **Generation** - The best retrieved context is sent to Google Gemini (`gemini-flash-lite`) to generate a grounded response.
+1. **Resolver** - A lightweight Gemini call decides whether the latest message is relevant to Ikeoluwa's portfolio. It also rewrites valid follow-ups into standalone questions.
+2. **Retrieval** - If the resolver accepts the message, the backend searches a Pinecone index containing chunked README and project metadata from tagged portfolio repositories.
+3. **Generation** - The best retrieved context is sent back to Gemini to generate a grounded response.
 
 The chat is project-aware: when a visitor is viewing a specific project, the bot can answer in that project's context.
+
+### Why Gemini resolves relevance
+
+The chat originally used a Pinecone topic-gate index before retrieval. That was cheaper in theory, but it had two practical problems:
+
+- Raw vector similarity was too loose for a binary allow/block decision.
+- Pinecone reranking made the gate much more accurate, but the free monthly rerank allowance is much smaller than the daily Gemini request allowance.
+
+The current design spends a small Gemini call up front to handle two jobs that vector search handled poorly: deciding whether the request belongs in the portfolio domain, and resolving conversational follow-ups like "how was it implemented?" into standalone questions. This means relevant chat requests usually take three network steps:
+
+1. Gemini resolver for relevance and follow-up rewriting.
+2. Pinecone retrieval for portfolio context.
+3. Gemini generation for the final grounded answer.
+
+That adds latency, but avoids using Pinecone rerank for every gate check and prevents irrelevant questions from reaching retrieval. The tradeoff favors correctness and predictable Pinecone usage over the absolute lowest number of network calls.
 
 ---
 
@@ -53,7 +68,7 @@ The FastAPI app runs locally with Uvicorn and is packaged as a container for dep
 
 | Route | Purpose |
 |---|---|
-| `POST /api/chat` | Topic-gated RAG chat pipeline |
+| `POST /api/chat` | Gemini-resolved RAG chat pipeline |
 | `GET /api/projects` | Lists portfolio repositories with merged metadata |
 | `GET /api/resume` | Parses a hosted resume PDF with Gemini and caches the result |
 | `GET/POST/PATCH/DELETE /api/gallery/*` | Poem, comment, and like flows |
@@ -105,15 +120,6 @@ cd backend
 set PYTHONPATH=.
 python -m unittest discover tests
 ```
-
-Seed the topic-gate index:
-
-```bash
-cd backend
-python scripts/seed_questions.py
-```
-
----
 
 ## Repository structure
 

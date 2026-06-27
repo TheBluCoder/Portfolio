@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from src.config.log_config import setup_logging
-from src.config.settings import ADMIN_API_KEY, PORTFOLIO_CONTEXT_INDEX, TOPIC_GATE_INDEX
+from src.config.settings import ADMIN_API_KEY, PORTFOLIO_CONTEXT_INDEX
 from src.dependencies import get_pinecone_service
 from src.services.pinecone_service import PineconeService
 
 router = APIRouter()
 logger = setup_logging(filename=__file__)
 
-MANAGED_INDEXES = [PORTFOLIO_CONTEXT_INDEX, TOPIC_GATE_INDEX]
+MANAGED_INDEXES = [PORTFOLIO_CONTEXT_INDEX]
 
 
 class RecordUpsert(BaseModel):

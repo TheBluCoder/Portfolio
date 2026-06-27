@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 from datetime import datetime, timezone
+
+CHAT_USER_MESSAGE_MAX_LENGTH = 1000
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -15,13 +17,22 @@ class Message(BaseModel):
     type: Literal["human", "ai"]
     content: str
 
+    @model_validator(mode="after")
+    def validate_human_message_length(self) -> "Message":
+        if self.type == "human" and len(self.content) > CHAT_USER_MESSAGE_MAX_LENGTH:
+            raise ValueError(
+                f"Human message content must be at most {CHAT_USER_MESSAGE_MAX_LENGTH} characters"
+            )
+        return self
+
 class ChatRequest(BaseModel):
-    context: list[Message] = None
+    context: list[Message] | None = None
 
 
 class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
+    version: str
 
 class PoemCreate(BaseModel):
     title: str

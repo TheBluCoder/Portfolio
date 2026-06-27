@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, provide } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { MessageCircleIcon, HomeIcon, Code2Icon, BookOpenIcon } from 'lucide-vue-next'
 import ChatBox from '@/components/ChatBox.vue'
@@ -36,6 +36,8 @@ const askBtnLabel = computed(() => {
   const short = name.length > 24 ? name.slice(0, 24).trimEnd() + '…' : name
   return `chat about ${short} →`
 })
+
+watch(() => route.path, () => { if (isChatOpen.value) closeChat() })
 
 provide('openChat', openGlobalChat)
 provide('setActiveProjectChatContext', (project) => { activeProjectContext.value = project })
@@ -101,7 +103,7 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
     </button>
 
     <!-- ── Chat backdrop (mobile) ── -->
-    <div v-if="isChatOpen" class="chat-backdrop md:hidden" @click="closeChat" />
+    <div v-if="isChatOpen" class="chat-backdrop" @click="closeChat" />
 
     <!-- ── Chat panel ── -->
     <ChatBox :is-open="isChatOpen" :project-context="chatProjectContext" @close="closeChat" />
@@ -352,5 +354,13 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   background: rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+}
+
+@media (min-width: 768px) {
+  .chat-backdrop {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 </style>
