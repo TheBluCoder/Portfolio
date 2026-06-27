@@ -261,22 +261,25 @@ class PineconeService:
         namespace: str = DEFAULT_NAMESPACE,
         top_k: int = PINECONE_QUERY_TOP_K,
         top_n: int = PINECONE_QUERY_TOP_N,
+        use_rerank: bool = True,
     ) -> Any:
         """Query similar vectors from Pinecone"""
         host = await self.get_or_create_index(index_name)
         async with self._client.IndexAsyncio(host=host) as index:
             logger.info(f"Querying index '{index_name}' namespace '{namespace}' at host {host}...")
-            results = await index.search(
-                namespace=namespace, 
-                query=SearchQuery(inputs={"text": query}, top_k=top_k), 
-                rerank=SearchRerank(
+            search_kwargs: dict[str, Any] = {
+                "namespace": namespace,
+                "query": SearchQuery(inputs={"text": query}, top_k=top_k),
+            }
+            if use_rerank:
+                search_kwargs["rerank"] = SearchRerank(
                     model="pinecone-rerank-v0",
                     rank_fields=["text"],
                     top_n=top_n,
                     query=query,
                     parameters={"truncate": "END"},
                 )
-            )
+            results = await index.search(**search_kwargs)
             logger.info("Query complete.")
             return results
 

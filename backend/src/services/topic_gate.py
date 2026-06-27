@@ -27,7 +27,15 @@ class TopicVectorStore(Protocol):
     """Vector-store operations required to score topic similarity."""
 
     def query_topic_similarity(self, query: str, index_name: str) -> Awaitable[float]: ...
-    def query_similar(self, index_name: str, query: str) -> Awaitable[Any]: ...
+    def query_similar(
+        self,
+        index_name: str,
+        query: str,
+        namespace: str = "",
+        top_k: int = 7,
+        top_n: int = 3,
+        use_rerank: bool = True,
+    ) -> Awaitable[Any]: ...
     def extract_best_score(self, results: Any) -> float: ...
 
 
@@ -49,7 +57,11 @@ class TopicGate:
         if not question or not question.strip():
             return TopicGateResult(accepted=False, score=0.0)
 
-        results = await self.vector_store.query_similar(self.index_name, question)
+        results = await self.vector_store.query_similar(
+            self.index_name,
+            question,
+            use_rerank=False,
+        )
         score = self.vector_store.extract_best_score(results)
         accepted = score >= self.threshold
         logger.info(
