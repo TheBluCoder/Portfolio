@@ -154,16 +154,23 @@ const sendMessage = async () => {
       throw new Error(`API responded with status ${response.status}`)
     }
 
-    conversation[loadingIndex].isLoading = false
-
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
+    let firstChunk = true
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
+      if (firstChunk) {
+        conversation[loadingIndex].isLoading = false
+        firstChunk = false
+      }
       conversation[loadingIndex].content += decoder.decode(value, { stream: true })
       scrollToBottom()
+    }
+
+    if (firstChunk) {
+      conversation[loadingIndex].isLoading = false
     }
   } catch (error) {
     console.error('Error sending message:', error)
