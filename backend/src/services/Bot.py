@@ -2,6 +2,7 @@
 
 import asyncio
 import dotenv
+import re
 from collections.abc import AsyncIterator, Awaitable
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -41,7 +42,7 @@ generation_config = genai.types.GenerateContentConfig(
 class ContextRetriever(Protocol):
     """Required vector retrieval operations for the bot service."""
 
-    def fetch_candidates(self, index_name: str, query: str) -> Awaitable[list[dict[str, Any]]]: ...
+    def fetch_candidates(self, index_name: str, query: str, namespaces: list[str] | None = None) -> Awaitable[list[dict[str, Any]]]: ...
     def rerank_candidates(self, candidates: list[dict[str, Any]], rerank_query: str) -> Awaitable[list[dict[str, Any]]]: ...
 
 
@@ -72,12 +73,13 @@ class BotService:
         fetch_query = self.prompt_builder.build_retrieval_query(
             context, latest_question, latest_question,
         )
+        namespaces = self._extract_project_namespaces(context)
 
         # Run resolver and vector fetch in parallel
         try:
             resolution, candidates = await asyncio.gather(
                 self.chat_resolver.resolve(context, latest_question),
-                self._fetch_candidates(fetch_query),
+                self._fetch_candidates(fetch_query, namespaces=namespaces),
             )
         except Exception as e:
             logger.error("Error resolving chat relevance: %s", e, exc_info=True)
@@ -115,10 +117,25 @@ class BotService:
         """Collect the full streamed response into a string."""
         return "".join([chunk async for chunk in self.stream_response(context)])
 
-    async def _fetch_candidates(self, query: str) -> list[dict[str, Any]]:
-        """Fetch raw candidates across namespaces, returning an empty list on failure."""
+    def _extract_project_namespaces(self, context: list[Message] | None) -> list[str] | None:
+        """Return [project_ns, manual_ns] parsed from the project context message, or None for global chat."""
+        for msg in (context or []):
+            if msg.type == "human" and msg.content.startswith("The user is viewing this project:"):
+                match = re.search(
+                    r"Source code:\s*https?://github\.com/([^/\s]+)/([^/\s]+)",
+                    msg.content,
+                )
+                if match:
+                    owner = match.group(1).lower().replace("_", "-")
+                    repo = match.group(2).lower().replace("_", "-")
+                    base = f"github:{owner}:{repo}"
+                    return [base, f"{base}:manual"]
+        return None
+
+    async def _fetch_candidates(self, query: str, namespaces: list[str] | None = None) -> list[dict[str, Any]]:
+        """Fetch raw candidates, scoped to project namespaces when available."""
         try:
-            return await self.context_retriever.fetch_candidates(self.context_index, query)
+            return await self.context_retriever.fetch_candidates(self.context_index, query, namespaces=namespaces)
         except Exception as e:
             logger.error("Error fetching candidates: %s", e, exc_info=True)
             return []
