@@ -390,7 +390,7 @@ const renderMarkdown = (content) => {
   font-size: 0.875rem;
   line-height: 1.65;
   min-width: 0;
-  overflow: hidden;
+  word-break: break-word;
 }
 
 .chat-message--human {
