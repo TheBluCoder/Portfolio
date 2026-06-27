@@ -1,5 +1,6 @@
 """Generate portfolio-grounded chat responses with relevance resolution and retrieval."""
 
+import asyncio
 import dotenv
 from collections.abc import AsyncIterator, Awaitable
 from typing import TYPE_CHECKING, Any, Protocol
@@ -40,8 +41,8 @@ generation_config = genai.types.GenerateContentConfig(
 class ContextRetriever(Protocol):
     """Required vector retrieval operations for the bot service."""
 
-    def query_similar(self, index_name: str, query: str) -> Awaitable[Any]: ...
-    def query_similar_namespaces(self, index_name: str, query: str) -> Awaitable[dict[str, Any]]: ...
+    def fetch_candidates(self, index_name: str, query: str) -> Awaitable[list[dict[str, Any]]]: ...
+    def rerank_candidates(self, candidates: list[dict[str, Any]], rerank_query: str) -> Awaitable[list[dict[str, Any]]]: ...
 
 
 class BotService:
@@ -67,23 +68,32 @@ class BotService:
         )
         latest_question = clamp_user_message(latest_question)
 
+        # Build fetch query synchronously — no network call needed
+        fetch_query = self.prompt_builder.build_retrieval_query(
+            context, latest_question, latest_question,
+        )
+
+        # Run resolver and vector fetch in parallel
         try:
-            resolution = await self.chat_resolver.resolve(context, latest_question)
+            resolution, candidates = await asyncio.gather(
+                self.chat_resolver.resolve(context, latest_question),
+                self._fetch_candidates(fetch_query),
+            )
         except Exception as e:
             logger.error("Error resolving chat relevance: %s", e, exc_info=True)
             yield "An error occurred while understanding the message."
             return
 
+        # Gate on relevance — rerank never fires for off-topic queries
         if not resolution.relevant:
             yield OFF_TOPIC_RESPONSE
             return
 
-        retrieval_query = self.prompt_builder.build_retrieval_query(
-            context,
-            latest_question,
-            resolution.standalone_question,
+        # Rerank using the resolver's standalone question for better precision
+        rerank_query = self.prompt_builder.build_retrieval_query(
+            context, latest_question, resolution.standalone_question,
         )
-        retrieved_context = await self.retrieve_context(retrieval_query)
+        retrieved_context = await self._rerank(candidates, rerank_query)
         prompt = self.prompt_builder.build_generation_prompt(retrieved_context, latest_question)
         history = self.prompt_builder.build_chat_history(context)
 
@@ -105,16 +115,20 @@ class BotService:
         """Collect the full streamed response into a string."""
         return "".join([chunk async for chunk in self.stream_response(context)])
 
-    async def retrieve_context(self, question: str) -> dict[str, Any]:
-        """Retrieve matching context across namespaces without failing the chat request."""
-        context: dict[str, Any] = {"index": self.context_index, "results": None}
-
+    async def _fetch_candidates(self, query: str) -> list[dict[str, Any]]:
+        """Fetch raw candidates across namespaces, returning an empty list on failure."""
         try:
-            context["results"] = await self.context_retriever.query_similar_namespaces(
-                self.context_index,
-                question,
-            )
+            return await self.context_retriever.fetch_candidates(self.context_index, query)
         except Exception as e:
-            logger.error(f"Error querying portfolio context: {e}", exc_info=True)
+            logger.error("Error fetching candidates: %s", e, exc_info=True)
+            return []
 
-        return context
+    async def _rerank(self, candidates: list[dict[str, Any]], rerank_query: str) -> dict[str, Any]:
+        """Rerank candidates with the resolved query, returning a context dict for prompt building."""
+        result: dict[str, Any] = {"index": self.context_index, "results": None}
+        try:
+            top_hits = await self.context_retriever.rerank_candidates(candidates, rerank_query)
+            result["results"] = {"reranked": top_hits}
+        except Exception as e:
+            logger.error("Error reranking candidates: %s", e, exc_info=True)
+        return result

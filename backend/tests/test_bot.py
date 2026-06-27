@@ -21,9 +21,10 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
             chat_resolver=chat_resolver,
         )
 
-    async def test_off_topic_question_skips_retrieval_and_llm(self) -> None:
+    async def test_off_topic_question_skips_rerank_and_llm(self) -> None:
         context = [Message(type="human", content="What is the weather today?")]
         context_retriever = AsyncMock()
+        context_retriever.fetch_candidates.return_value = []
         chat_resolver = AsyncMock()
         chat_resolver.resolve.return_value = ChatResolution(
             relevant=False,
@@ -37,13 +38,15 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(response, Bot.OFF_TOPIC_RESPONSE)
         chat_resolver.resolve.assert_awaited_once_with(context, "What is the weather today?")
-        context_retriever.query_similar_namespaces.assert_not_awaited()
+        context_retriever.fetch_candidates.assert_awaited_once()
+        context_retriever.rerank_candidates.assert_not_awaited()
         client.aio.chats.create.assert_not_called()
 
     async def test_relevant_question_retrieves_context_and_calls_llm_once(self) -> None:
         context = [Message(type="human", content="Tell me about Ikeoluwa's projects")]
         context_retriever = AsyncMock()
-        context_retriever.query_similar_namespaces.return_value = {"default": "ctx"}
+        context_retriever.fetch_candidates.return_value = [{"_id": "1", "text": "ctx", "namespace": "ns", "_score": 0.9}]
+        context_retriever.rerank_candidates.return_value = [{"_id": "1", "text": "ctx", "namespace": "ns", "_score": 0.9}]
         chat_resolver = AsyncMock()
         chat_resolver.resolve.return_value = ChatResolution(
             relevant=True,
@@ -60,7 +63,8 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
             response = await bot_service.generate_response(context)
 
         self.assertEqual(response, "Answer")
-        context_retriever.query_similar_namespaces.assert_awaited_once()
+        context_retriever.fetch_candidates.assert_awaited_once()
+        context_retriever.rerank_candidates.assert_awaited_once()
         client.aio.chats.create.assert_called_once()
         chat.send_message_stream.assert_awaited_once()
 
@@ -79,7 +83,8 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
             Message(type="human", content="Oh interesting, and how was it implemented?"),
         ]
         context_retriever = AsyncMock()
-        context_retriever.query_similar_namespaces.return_value = {"default": "ctx"}
+        context_retriever.fetch_candidates.return_value = []
+        context_retriever.rerank_candidates.return_value = []
         chat_resolver = AsyncMock()
         chat_resolver.resolve.return_value = ChatResolution(
             relevant=True,
@@ -100,11 +105,11 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
             response = await bot_service.generate_response(context)
 
         self.assertEqual(response, "Implemented with platform scrapers.")
-        retrieval_query = context_retriever.query_similar_namespaces.await_args.args[1]
-        self.assertIn("How was the modular scraper architecture", retrieval_query)
-        self.assertIn("AI Chat Exporter", retrieval_query)
-        self.assertIn("Selected project context:", retrieval_query)
-        self.assertLessEqual(len(retrieval_query), 1000)
+        rerank_query = context_retriever.rerank_candidates.await_args.args[1]
+        self.assertIn("How was the modular scraper architecture", rerank_query)
+        self.assertIn("AI Chat Exporter", rerank_query)
+        self.assertIn("Selected project context:", rerank_query)
+        self.assertLessEqual(len(rerank_query), 1000)
 
     def test_chat_history_skips_leading_ai_greeting(self) -> None:
         context = [

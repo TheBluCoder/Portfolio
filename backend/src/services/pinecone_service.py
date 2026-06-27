@@ -293,21 +293,20 @@ class PineconeService:
             return results
 
     @ensure_initialized
-    async def query_similar_namespaces(
+    async def fetch_candidates(
         self,
         index_name: str,
         query: str,
         namespaces: list[str] | None = None,
         top_k: int = PINECONE_QUERY_TOP_K,
-        top_n: int = PINECONE_QUERY_TOP_N,
-    ) -> dict[str, Any]:
-        """Query all namespaces in parallel (vector-only), then rerank the merged pool once."""
+    ) -> list[dict[str, Any]]:
+        """Query all namespaces in parallel with vector similarity only. Returns merged raw hits."""
         target_namespaces = namespaces or await self.list_namespaces(index_name)
 
         async def _query_one(namespace: str) -> tuple[str, Any]:
             try:
                 result = await self.query_similar(
-                    index_name, query, namespace=namespace, top_k=top_k, top_n=top_n, use_rerank=False,
+                    index_name, query, namespace=namespace, top_k=top_k, use_rerank=False,
                 )
                 return namespace, result
             except Exception as e:
@@ -335,14 +334,27 @@ class PineconeService:
                     "_score": getattr(hit, "_score", 0.0),
                 })
 
+        logger.info(
+            "Fetched %d candidates across %d namespaces for index '%s'",
+            len(candidates), len(target_namespaces), index_name,
+        )
+        return candidates
+
+    @ensure_initialized
+    async def rerank_candidates(
+        self,
+        candidates: list[dict[str, Any]],
+        rerank_query: str,
+        top_n: int = PINECONE_QUERY_TOP_N,
+    ) -> list[dict[str, Any]]:
+        """Rerank a merged candidate list with one inference call using the provided query."""
         if not candidates:
-            logger.warning("No candidates found across namespaces for index '%s'", index_name)
-            return {}
+            return []
 
         try:
             reranked = await self._client.inference.rerank(
                 model="pinecone-rerank-v0",
-                query=query,
+                query=rerank_query,
                 documents=candidates,
                 rank_fields=["text"],
                 top_n=min(top_n, len(candidates)),
@@ -357,14 +369,24 @@ class PineconeService:
                 }
                 for item in (getattr(reranked, "data", None) or [])
             ]
-            logger.info(
-                "Reranked %d candidates to top %d hits across %d namespaces",
-                len(candidates), len(top_hits), len(target_namespaces),
-            )
+            logger.info("Reranked %d candidates to top %d hits", len(candidates), len(top_hits))
+            return top_hits
         except Exception as e:
             logger.error("Reranking failed, falling back to vector score order: %s", e, exc_info=True)
-            top_hits = sorted(candidates, key=lambda c: c["_score"], reverse=True)[:top_n]
+            return sorted(candidates, key=lambda c: c["_score"], reverse=True)[:top_n]
 
+    @ensure_initialized
+    async def query_similar_namespaces(
+        self,
+        index_name: str,
+        query: str,
+        namespaces: list[str] | None = None,
+        top_k: int = PINECONE_QUERY_TOP_K,
+        top_n: int = PINECONE_QUERY_TOP_N,
+    ) -> dict[str, Any]:
+        """Convenience wrapper: fetch candidates then rerank in one call."""
+        candidates = await self.fetch_candidates(index_name, query, namespaces, top_k)
+        top_hits = await self.rerank_candidates(candidates, query, top_n)
         return {"reranked": top_hits}
 
     @ensure_initialized
