@@ -32,6 +32,7 @@ class ChatRequest(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
+    version: str
 
 class PoemCreate(BaseModel):
     title: str

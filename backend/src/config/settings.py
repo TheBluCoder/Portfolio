@@ -32,6 +32,7 @@ LOG_DIR = os.getenv("LOG_DIR", "logs")
 PORTFOLIO_CONTEXT_INDEX = os.getenv("PORTFOLIO_CONTEXT_INDEX", "portfolio")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
 RESUME_URL = os.getenv("RESUME_URL")
+BUILD_COMMIT = os.getenv("BUILD_COMMIT", "dev")
 CORS_ALLOWED_ORIGINS = _parse_origins(os.getenv("CORS_ALLOWED_ORIGINS"))
 
 # Pinecone Service Configuration

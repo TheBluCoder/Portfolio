@@ -1,5 +1,6 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter
-from datetime import datetime
+from src.config.settings import BUILD_COMMIT
 from ..models.schemas import HealthResponse
 
 router = APIRouter()
@@ -8,5 +9,6 @@ router = APIRouter()
 async def health_check() -> HealthResponse:
     return HealthResponse(
         status="healthy",
-        timestamp=datetime.utcnow()
-    ) 
+        timestamp=datetime.now(timezone.utc),
+        version=BUILD_COMMIT,
+    )

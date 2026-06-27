@@ -94,6 +94,7 @@ jobs:
           set -euo pipefail
           image="${{ steps.image_meta.outputs.image_name }}"
           docker build \
+            --build-arg BUILD_COMMIT="${GITHUB_SHA}" \
             --tag "${image}:${GITHUB_SHA}" \
             --tag "${image}:backend-latest" \
             backend
