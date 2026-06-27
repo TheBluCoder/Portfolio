@@ -160,7 +160,6 @@ const sendMessage = async () => {
       }),
     })
     let data = await response.text()
-    console.log('Raw response data:', data) // Log the raw data
 
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`)
@@ -202,36 +201,27 @@ const renderMarkdown = (content) => {
 </script>
 
 <template>
-  <div
-    :class="[
-      'fixed z-50 transition-all duration-300 ease-in-out',
-      'md:w-[400px] w-full md:max-w-[400px]',
-      'flex flex-col bg-gray-900/95 backdrop-blur-md',
-      'md:right-4 md:top-[60px] md:bottom-4 md:rounded-lg',
-      isOpen ? 'top-0 bottom-0' : 'translate-x-full md:translate-y-full',
-    ]"
-  >
+  <div class="chat-panel" :class="{ 'chat-panel--open': isOpen }">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-700">
-      <h2 class="text-xl font-semibold text-white">
-        {{
-          props.projectContext ? `Chat about ${props.projectContext.name}` : 'Chat with Ikeoluwa'
-        }}
-      </h2>
-      <button @click="emit('close')" class="p-1 rounded-full hover:bg-gray-700 transition-colors">
-        <XIcon class="h-6 w-6 text-gray-400" />
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <span class="chat-label">// chat</span>
+        <h2 class="chat-title">
+          {{ props.projectContext ? props.projectContext.name : 'ask ike.' }}
+        </h2>
+      </div>
+      <button class="chat-close" @click="emit('close')" aria-label="Close chat">
+        <XIcon class="chat-close-icon" />
       </button>
     </div>
 
     <!-- Messages -->
-    <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+    <div ref="chatContainer" class="chat-messages">
       <div
         v-for="(message, index) in visibleConversation"
         :key="index"
-        :class="[
-          'max-w-[70%] min-w-0 overflow-hidden rounded-lg p-3',
-          message.type === 'human' ? 'bg-blue-600 text-white ml-auto' : 'bg-gray-700 text-gray-100',
-        ]"
+        class="chat-message"
+        :class="message.type === 'human' ? 'chat-message--human' : 'chat-message--ai'"
       >
         <template v-if="message.isLoading">
           <div class="typing-animation">
@@ -241,41 +231,32 @@ const renderMarkdown = (content) => {
           </div>
         </template>
         <template v-else>
-          <div
-            class="chat-markdown prose prose-invert prose-sm max-w-full prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 prose-a:text-blue-400"
-            v-html="renderMarkdown(message.content)"
-          ></div>
+          <div class="chat-markdown" v-html="renderMarkdown(message.content)"></div>
         </template>
       </div>
     </div>
 
     <!-- Input -->
-    <div class="p-4 border-t border-gray-700">
-      <form @submit.prevent="sendMessage" class="flex gap-2">
+    <div class="chat-input-area">
+      <form class="chat-form" @submit.prevent="sendMessage">
         <input
           ref="inputRef"
           v-model="newMessage"
           type="text"
           placeholder="Ask me anything..."
           :maxlength="CHAT_USER_MESSAGE_MAX_LENGTH"
-          class="flex-1 bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="chat-input"
         />
-        <button
-          type="submit"
-          :disabled="!canSendMessage"
-          class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <SendIcon class="h-5 w-5" />
+        <button type="submit" :disabled="!canSendMessage" class="chat-send">
+          <SendIcon class="chat-send-icon" />
         </button>
       </form>
-      <div class="mt-2 flex items-center justify-between text-xs">
-        <p v-if="isMessageTooLong" class="text-red-400">
+      <div class="chat-char-count">
+        <span v-if="isMessageTooLong" class="chat-char-error">
           Message must be {{ CHAT_USER_MESSAGE_MAX_LENGTH }} characters or fewer.
-        </p>
-        <p v-else class="text-gray-400">
-          Keep messages under {{ CHAT_USER_MESSAGE_MAX_LENGTH }} characters.
-        </p>
-        <span :class="isMessageTooLong ? 'text-red-400' : 'text-gray-500'">
+        </span>
+        <span v-else class="chat-char-hint">Keep messages under {{ CHAT_USER_MESSAGE_MAX_LENGTH }} characters.</span>
+        <span class="chat-char-num" :class="{ 'chat-char-num--error': isMessageTooLong }">
           {{ charactersRemaining }}
         </span>
       </div>
@@ -284,120 +265,324 @@ const renderMarkdown = (content) => {
 </template>
 
 <style scoped>
-/* Custom scrollbar styling */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+/* Panel */
+.chat-panel {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  background: rgba(10, 10, 14, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+.chat-panel--open {
+  transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+  .chat-panel {
+    inset: auto;
+    top: 64px;
+    right: 1rem;
+    bottom: 1rem;
+    left: auto;
+    width: 400px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    transform: translateY(110%);
+  }
+
+  .chat-panel--open {
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.chat-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.chat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: #3e3c52;
+  letter-spacing: 0.05em;
+}
+
+.chat-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e0ddf5;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.chat-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #52506a;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.chat-close:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #9896b0;
+}
+
+.chat-close-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Messages */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 124, 248, 0.2) transparent;
+}
+
+.chat-messages::-webkit-scrollbar {
   width: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+.chat-messages::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.3);
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(139, 124, 248, 0.2);
   border-radius: 4px;
+}
+
+.chat-message {
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-message--human {
+  background: rgba(139, 124, 248, 0.1);
+  border: 1px solid rgba(139, 124, 248, 0.22);
+  color: #c8c6e0;
+  align-self: flex-end;
+  max-width: 82%;
+}
+
+.chat-message--ai {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #9896b0;
+  align-self: stretch;
 }
 
 /* Typing animation */
 .typing-animation {
   display: flex;
-  gap: 4px;
-  padding: 4px 0;
+  gap: 5px;
+  padding: 3px 0;
 }
 
 .typing-animation span {
-  width: 8px;
-  height: 8px;
-  background-color: #fff;
+  width: 7px;
+  height: 7px;
+  background: rgba(139, 124, 248, 0.7);
   border-radius: 50%;
   animation: typing 1s infinite ease-in-out;
 }
 
-.typing-animation span:nth-child(1) {
-  animation-delay: 0.2s;
-}
-
-.typing-animation span:nth-child(2) {
-  animation-delay: 0.4s;
-}
-
-.typing-animation span:nth-child(3) {
-  animation-delay: 0.6s;
-}
+.typing-animation span:nth-child(1) { animation-delay: 0.15s; }
+.typing-animation span:nth-child(2) { animation-delay: 0.3s; }
+.typing-animation span:nth-child(3) { animation-delay: 0.45s; }
 
 @keyframes typing {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-4px);
-    opacity: 1;
-  }
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50%       { transform: translateY(-5px); opacity: 1; }
 }
+
+/* Input area */
+.chat-input-area {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.chat-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  color: #e0ddf5;
+  outline: none;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+
+.chat-input::placeholder {
+  color: #3e3c52;
+}
+
+.chat-input:focus {
+  border-color: rgba(139, 124, 248, 0.4);
+}
+
+.chat-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #8b7cf8;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.chat-send:hover:not(:disabled) {
+  background: #9d91f9;
+}
+
+.chat-send:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.chat-send-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* Char count */
+.chat-char-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.45rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+}
+
+.chat-char-hint { color: #3e3c52; }
+.chat-char-error { color: rgba(239, 68, 68, 0.65); }
+.chat-char-num { color: #52506a; }
+.chat-char-num--error { color: rgba(239, 68, 68, 0.65); }
 </style>
 
 <style>
-/* Global styles for markdown content */
-.prose ul {
-  list-style-type: disc;
-  padding-left: 1.5em;
-  margin: 0.75em 0;
-}
-
-.prose li {
-  margin-bottom: 0.25em;
-}
-
-.prose li::marker {
-  color: rgba(156, 163, 175, 0.8);
-}
-
-.prose p {
-  margin-bottom: 0.75em;
-}
-
+/* Markdown content — unscoped because v-html bypasses scoped attribute */
 .chat-markdown {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.chat-markdown pre {
-  max-width: 100%;
-  overflow-x: auto;
-  white-space: pre;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.45) transparent;
+.chat-markdown p {
+  margin: 0 0 0.65em;
 }
 
-.chat-markdown pre::-webkit-scrollbar {
-  height: 4px;
+.chat-markdown p:last-child {
+  margin-bottom: 0;
 }
 
-.chat-markdown pre::-webkit-scrollbar-track {
-  background: transparent;
+.chat-markdown ul,
+.chat-markdown ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
 }
 
-.chat-markdown pre::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.45);
-  border-radius: 4px;
+.chat-markdown li {
+  margin-bottom: 0.2em;
+}
+
+.chat-markdown li::marker {
+  color: rgba(139, 124, 248, 0.5);
+}
+
+.chat-markdown a {
+  color: #8b7cf8;
+  text-decoration: none;
+}
+
+.chat-markdown a:hover {
+  text-decoration: underline;
 }
 
 .chat-markdown code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: rgba(139, 124, 248, 0.08);
+  border: 1px solid rgba(139, 124, 248, 0.14);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+.chat-markdown pre {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0.5em 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 124, 248, 0.2) transparent;
+}
+
+.chat-markdown pre::-webkit-scrollbar { height: 4px; }
+.chat-markdown pre::-webkit-scrollbar-track { background: transparent; }
+.chat-markdown pre::-webkit-scrollbar-thumb { background: rgba(139, 124, 248, 0.2); border-radius: 4px; }
+
 .chat-markdown pre code {
-  display: block;
-  min-width: max-content;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.82em;
   white-space: pre;
   overflow-wrap: normal;
+  display: block;
+  min-width: max-content;
 }
 </style>
