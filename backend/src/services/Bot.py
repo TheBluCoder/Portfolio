@@ -16,7 +16,7 @@ from src.config.log_config import setup_logging
 from src.config.prompts import SYSTEM_PROMPT
 from google import genai
 from google.genai import types
-from src.models.schemas import Message
+from src.models.schemas import CHAT_USER_MESSAGE_MAX_LENGTH, Message
 from src.services.topic_gate import OFF_TOPIC_RESPONSE, TopicGateResult
 
 if TYPE_CHECKING:
@@ -118,6 +118,7 @@ class BotService:
             (msg.content for msg in reversed(context or []) if msg.type == "human"),
             "",
         )
+        latest_question = clamp_user_message(latest_question)
         gate_query = build_topic_gate_query(latest_question)
         gate_result = await self.topic_gate.check(gate_query)
         resolved_query = latest_question
@@ -311,14 +312,19 @@ def collect_previous_user_turns(context: list[Message] | None) -> list[str]:
         content = " ".join(msg.content.split())
         if not content or content.startswith("The user is viewing this project:"):
             continue
-        user_turns.append(content)
+        user_turns.append(clamp_user_message(content))
 
     return user_turns[:-1] if user_turns else []
 
 
 def normalize_message(text: str) -> str:
     """Collapse whitespace and lowercase chat text for follow-up heuristics."""
-    return " ".join(text.lower().split())
+    return " ".join(clamp_user_message(text).lower().split())
+
+
+def clamp_user_message(text: str) -> str:
+    """Defensively cap human-message length before topic gating and retrieval."""
+    return text[:CHAT_USER_MESSAGE_MAX_LENGTH]
 
 
 def tokenize(text: str) -> set[str]:
