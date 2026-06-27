@@ -7,6 +7,12 @@ from src.services.chat_prompting import ChatPromptBuilder
 from src.services.chat_resolver import ChatResolution
 
 
+async def _fake_stream(*texts: str):
+    """Async generator that yields mock chunks for send_message_stream."""
+    for text in texts:
+        yield Mock(text=text)
+
+
 class BotTests(unittest.IsolatedAsyncioTestCase):
     def _bot_service(self, context_retriever: AsyncMock, chat_resolver: AsyncMock) -> Bot.BotService:
         return Bot.BotService(
@@ -48,9 +54,7 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("src.services.Bot.client") as client:
             chat = Mock()
-            chat.send_message = AsyncMock(
-                return_value=Mock(text="Answer", usage_metadata=None)
-            )
+            chat.send_message_stream = AsyncMock(return_value=_fake_stream("Answer"))
             client.aio.chats.create.return_value = chat
 
             response = await bot_service.generate_response(context)
@@ -58,7 +62,7 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response, "Answer")
         context_retriever.query_similar_namespaces.assert_awaited_once()
         client.aio.chats.create.assert_called_once()
-        chat.send_message.assert_awaited_once()
+        chat.send_message_stream.assert_awaited_once()
 
     async def test_follow_up_uses_resolver_standalone_question_for_retrieval(self) -> None:
         context = [
@@ -88,8 +92,8 @@ class BotTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("src.services.Bot.client") as client:
             chat = Mock()
-            chat.send_message = AsyncMock(
-                return_value=Mock(text="Implemented with platform scrapers.", usage_metadata=None)
+            chat.send_message_stream = AsyncMock(
+                return_value=_fake_stream("Implemented with platform scrapers.")
             )
             client.aio.chats.create.return_value = chat
 

@@ -1,7 +1,7 @@
 """Generate portfolio-grounded chat responses with relevance resolution and retrieval."""
 
 import dotenv
-from collections.abc import Awaitable
+from collections.abc import AsyncIterator, Awaitable
 from typing import TYPE_CHECKING, Any, Protocol
 
 from google import genai
@@ -59,8 +59,8 @@ class BotService:
         self.chat_resolver = chat_resolver
         self.context_index = context_index
 
-    async def generate_response(self, context: list[Message] | None = None) -> str:
-        """Generate a grounded response for the latest human message in a conversation."""
+    async def stream_response(self, context: list[Message] | None = None) -> AsyncIterator[str]:
+        """Stream a grounded response token-by-token for the latest human message."""
         latest_question = next(
             (msg.content for msg in reversed(context or []) if msg.type == "human"),
             "",
@@ -71,9 +71,12 @@ class BotService:
             resolution = await self.chat_resolver.resolve(context, latest_question)
         except Exception as e:
             logger.error("Error resolving chat relevance: %s", e, exc_info=True)
-            return "An error occurred while understanding the message."
+            yield "An error occurred while understanding the message."
+            return
+
         if not resolution.relevant:
-            return OFF_TOPIC_RESPONSE
+            yield OFF_TOPIC_RESPONSE
+            return
 
         retrieval_query = self.prompt_builder.build_retrieval_query(
             context,
@@ -90,18 +93,17 @@ class BotService:
                 config=generation_config,
                 history=history or None,
             )
-            response = await chat.send_message(prompt)
-            usage = response.usage_metadata
-            logger.info(
-                "LLM response generated: prompt_tokens=%s cached_tokens=%s total_tokens=%s",
-                getattr(usage, "prompt_token_count", None),
-                getattr(usage, "cached_content_token_count", None),
-                getattr(usage, "total_token_count", None),
-            )
-            return response.text if response.text else "No content in response."
+            stream = await chat.send_message_stream(prompt)
+            async for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
         except Exception as e:
-            logger.error(f"Error during generation or tool handling: {e}", exc_info=True)
-            return "An error occurred while generating the response."
+            logger.error("Error during generation: %s", e, exc_info=True)
+            yield "An error occurred while generating the response."
+
+    async def generate_response(self, context: list[Message] | None = None) -> str:
+        """Collect the full streamed response into a string."""
+        return "".join([chunk async for chunk in self.stream_response(context)])
 
     async def retrieve_context(self, question: str) -> dict[str, Any]:
         """Retrieve matching context across namespaces without failing the chat request."""

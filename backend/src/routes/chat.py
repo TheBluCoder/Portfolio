@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from src.config.log_config import setup_logging
 from src.dependencies import get_bot_service, get_chat_rate_limiter
 from ..models.schemas import ChatRequest
@@ -14,7 +15,7 @@ async def chat(
     chat_request: ChatRequest,
     bot_service: Bot.BotService = Depends(get_bot_service),
     rate_limiter: RateLimiter = Depends(get_chat_rate_limiter),
-) -> str:
+) -> StreamingResponse:
     request_id = getattr(request.state, "request_id", "unknown")
     try:
         visitor_key = rate_limiter.visitor_key(
@@ -27,9 +28,10 @@ async def chat(
             request_id,
             len(chat_request.context or []),
         )
-        response = await bot_service.generate_response(chat_request.context)
-        logger.info("[request_id=%s] Chat request completed successfully", request_id)
-        return response
+        return StreamingResponse(
+            bot_service.stream_response(chat_request.context),
+            media_type="text/plain; charset=utf-8",
+        )
     except RateLimitExceeded:
         logger.warning("[request_id=%s] Chat rate limit exceeded", request_id)
         raise HTTPException(

@@ -126,62 +126,44 @@ watch(
   },
 )
 
+const scrollToBottom = () => {
+  if (chatContainer.value) {
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+  }
+}
+
 const sendMessage = async () => {
   if (!canSendMessage.value) return
 
   const conversation = currentConversation.value
 
-  // Add user message
-  conversation.push({
-    type: 'human',
-    content: trimmedMessage.value,
-  })
-
-  // Clear input
+  conversation.push({ type: 'human', content: trimmedMessage.value })
   newMessage.value = ''
 
-  try {
-    // Show loading message with typing animation
-    const loadingIndex =
-      conversation.push({
-        type: 'ai',
-        content: '',
-        isLoading: true,
-      }) - 1
+  const loadingIndex =
+    conversation.push({ type: 'ai', content: '', isLoading: true }) - 1
 
-    // Call the FastAPI backend
+  try {
     const response = await fetch(botUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        context: conversation.slice(0, -1),
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: conversation.slice(0, -1) }),
     })
-    let data = await response.text()
 
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`)
     }
 
-    try {
-      const parsedData = JSON.parse(data)
-      if (typeof parsedData === 'string') {
-        data = parsedData
-      }
-    } catch {
-      // The backend may also return plain text, which is already ready to render.
-    }
+    conversation[loadingIndex].isLoading = false
 
-    // Explicitly replace escaped newlines with actual newlines
-    data = data.replace(/\\n/g, '\n')
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
 
-    // Replace loading message with actual response
-    conversation[loadingIndex] = {
-      type: 'ai',
-      content: data,
-      isLoading: false,
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      conversation[loadingIndex].content += decoder.decode(value, { stream: true })
+      scrollToBottom()
     }
   } catch (error) {
     console.error('Error sending message:', error)
