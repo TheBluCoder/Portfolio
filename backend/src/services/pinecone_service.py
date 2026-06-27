@@ -63,7 +63,7 @@ class PineconeIndex(Protocol):
         self,
         namespace: str,
         query: SearchQuery,
-        rerank: SearchRerank,
+        rerank: SearchRerank | None = None,
     ) -> Any: ...
     async def describe_index_stats(self, filter: dict[str, Any] | None = None) -> Any: ...
     def list(self, **kwargs: Any) -> Any: ...
@@ -72,6 +72,7 @@ class PineconeIndex(Protocol):
 class PineconeClient(Protocol):
     """Subset of Pinecone client operations used by the service."""
 
+    inference: Any
     async def has_index(self, index_name: str) -> bool: ...
     async def create_index_for_model(
         self,
@@ -117,6 +118,7 @@ class PineconeService:
     _initialized: bool
     pc: PineconeClient | None
     chunking_executor: concurrent.futures.ThreadPoolExecutor | None
+    _host_cache: dict[str, str]
     
     def __new__(cls) -> "PineconeService":
         if cls._instance is None:
@@ -124,6 +126,7 @@ class PineconeService:
             cls._instance.pc = None
             cls._instance.chunking_executor = None
             cls._instance._initialized = False
+            cls._instance._host_cache = {}
         return cls._instance
 
     async def initialize(self) -> 'PineconeService':
@@ -159,29 +162,30 @@ class PineconeService:
 
     @ensure_initialized
     async def get_or_create_index(self, index_name: str) -> str:
-        """
-        Get the host for a Pinecone index. Creates the index if it doesn't exist.
-        Returns the index host URL.
-        """
+        """Return the host URL for a Pinecone index, creating it if absent. Result is cached in memory."""
+        if index_name in self._host_cache:
+            return self._host_cache[index_name]
+
         client = self._client
         if not await client.has_index(index_name):
             logger.info(f"Index '{index_name}' not found. Creating...")
             index_stats = await client.create_index_for_model(
                 name=index_name,
-                cloud="aws", 
-                region="us-east-1", 
+                cloud="aws",
+                region="us-east-1",
                 embed=IndexEmbed(model="multilingual-e5-large", field_map={"text": "text"}, metric="cosine"),
-                timeout=PINECONE_INDEX_TIMEOUT 
+                timeout=PINECONE_INDEX_TIMEOUT,
             )
             host = index_stats.host
             logger.info(f"Pinecone index {index_name} created at {host}")
-            return host
         else:
             logger.info(f"Index '{index_name}' found. Describing...")
             index_description = await client.describe_index(index_name)
             host = index_description.host
             logger.info(f"Pinecone index {index_name} host is {host}")
-            return host
+
+        self._host_cache[index_name] = host
+        return host
 
     @ensure_initialized
     async def delete_index(self, index_name: str) -> bool:
@@ -292,29 +296,71 @@ class PineconeService:
         top_k: int = PINECONE_QUERY_TOP_K,
         top_n: int = PINECONE_QUERY_TOP_N,
     ) -> dict[str, Any]:
-        """Query similar vectors across multiple namespaces in an index."""
+        """Query all namespaces in parallel (vector-only), then rerank the merged pool once."""
         target_namespaces = namespaces or await self.list_namespaces(index_name)
-        results: dict[str, Any] = {}
 
-        for namespace in target_namespaces:
+        async def _query_one(namespace: str) -> tuple[str, Any]:
             try:
-                results[namespace] = await self.query_similar(
-                    index_name,
-                    query,
-                    namespace=namespace,
-                    top_k=top_k,
-                    top_n=top_n,
+                result = await self.query_similar(
+                    index_name, query, namespace=namespace, top_k=top_k, top_n=top_n, use_rerank=False,
                 )
+                return namespace, result
             except Exception as e:
                 logger.error(
                     "Error querying index '%s' namespace '%s': %s",
-                    index_name,
-                    namespace,
-                    e,
-                    exc_info=True,
+                    index_name, namespace, e, exc_info=True,
                 )
+                return namespace, None
 
-        return results
+        pairs = await asyncio.gather(*(_query_one(ns) for ns in target_namespaces))
+
+        candidates: list[dict[str, Any]] = []
+        for namespace, result in pairs:
+            if result is None:
+                continue
+            hits = getattr(getattr(result, "result", None), "hits", None) or []
+            for hit in hits:
+                text = (getattr(hit, "fields", None) or {}).get("text", "")
+                if not text:
+                    continue
+                candidates.append({
+                    "_id": getattr(hit, "_id", ""),
+                    "text": text,
+                    "namespace": namespace,
+                    "_score": getattr(hit, "_score", 0.0),
+                })
+
+        if not candidates:
+            logger.warning("No candidates found across namespaces for index '%s'", index_name)
+            return {}
+
+        try:
+            reranked = await self._client.inference.rerank(
+                model="pinecone-rerank-v0",
+                query=query,
+                documents=candidates,
+                rank_fields=["text"],
+                top_n=min(top_n, len(candidates)),
+                parameters={"truncate": "END"},
+            )
+            top_hits = [
+                {
+                    "_id": candidates[item.index]["_id"],
+                    "text": candidates[item.index]["text"],
+                    "namespace": candidates[item.index]["namespace"],
+                    "_score": item.score,
+                }
+                for item in (getattr(reranked, "data", None) or [])
+            ]
+            logger.info(
+                "Reranked %d candidates to top %d hits across %d namespaces",
+                len(candidates), len(top_hits), len(target_namespaces),
+            )
+        except Exception as e:
+            logger.error("Reranking failed, falling back to vector score order: %s", e, exc_info=True)
+            top_hits = sorted(candidates, key=lambda c: c["_score"], reverse=True)[:top_n]
+
+        return {"reranked": top_hits}
 
     @ensure_initialized
     async def list_namespaces(self, index_name: str) -> list[str]:
