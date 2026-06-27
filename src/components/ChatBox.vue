@@ -23,6 +23,7 @@ const props = defineProps({
 
 const botUrl = import.meta.env.VITE_BOT_URL
 const emit = defineEmits(['close'])
+const CHAT_USER_MESSAGE_MAX_LENGTH = 1000
 
 const messages = ref({
   global: [], // For general chat
@@ -31,6 +32,12 @@ const messages = ref({
 const newMessage = ref('')
 const chatContainer = ref(null)
 const inputRef = ref(null)
+
+const trimmedMessage = computed(() => newMessage.value.trim())
+const messageLength = computed(() => newMessage.value.length)
+const charactersRemaining = computed(() => CHAT_USER_MESSAGE_MAX_LENGTH - messageLength.value)
+const isMessageTooLong = computed(() => messageLength.value > CHAT_USER_MESSAGE_MAX_LENGTH)
+const canSendMessage = computed(() => trimmedMessage.value && !isMessageTooLong.value)
 
 const projectDetailsForPrompt = computed(() => {
   if (!props.projectContext) return ''
@@ -120,18 +127,17 @@ watch(
 )
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim()) return
+  if (!canSendMessage.value) return
 
   const conversation = currentConversation.value
 
   // Add user message
   conversation.push({
     type: 'human',
-    content: newMessage.value,
+    content: trimmedMessage.value,
   })
 
   // Clear input
-  const userMessage = newMessage.value
   newMessage.value = ''
 
   try {
@@ -251,15 +257,28 @@ const renderMarkdown = (content) => {
           v-model="newMessage"
           type="text"
           placeholder="Ask me anything..."
+          :maxlength="CHAT_USER_MESSAGE_MAX_LENGTH"
           class="flex-1 bg-gray-800 text-white rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           type="submit"
-          class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+          :disabled="!canSendMessage"
+          class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           <SendIcon class="h-5 w-5" />
         </button>
       </form>
+      <div class="mt-2 flex items-center justify-between text-xs">
+        <p v-if="isMessageTooLong" class="text-red-400">
+          Message must be {{ CHAT_USER_MESSAGE_MAX_LENGTH }} characters or fewer.
+        </p>
+        <p v-else class="text-gray-400">
+          Keep messages under {{ CHAT_USER_MESSAGE_MAX_LENGTH }} characters.
+        </p>
+        <span :class="isMessageTooLong ? 'text-red-400' : 'text-gray-500'">
+          {{ charactersRemaining }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
