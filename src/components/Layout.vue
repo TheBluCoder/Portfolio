@@ -161,7 +161,10 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
 /* ── Palette tokens ── */
 .layout-root {
   min-height: 100vh;
-  background: var(--theme-bg);
+  background-color: var(--theme-bg);
+  background-image: var(--theme-bg-wash);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--theme-text);
 }
 

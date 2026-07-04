@@ -3,6 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: dark;
   --theme-bg: #0c0c10;
   --theme-bg-rgb: 12 12 16;
   --theme-surface: #141419;
@@ -34,6 +35,7 @@
   --theme-danger-soft: #fca5a5;
   --theme-white: #fff;
   --theme-white-rgb: 255 255 255;
+  --theme-on-accent: #fff;
   --theme-black-rgb: 0 0 0;
   --theme-border-subtle: rgb(var(--theme-white-rgb) / 0.06);
   --theme-border: rgb(var(--theme-white-rgb) / 0.07);
@@ -42,6 +44,7 @@
   --theme-surface-hover: rgb(var(--theme-white-rgb) / 0.04);
   --theme-accent-tint: rgb(var(--theme-accent-rgb) / 0.1);
   --theme-accent-border: rgb(var(--theme-accent-rgb) / 0.25);
+  --theme-bg-wash: none;
 
   --background: var(--theme-bg);
   --foreground: var(--theme-text);
@@ -50,7 +53,7 @@
   --popover: var(--theme-surface);
   --popover-foreground: var(--theme-text);
   --primary: var(--theme-accent);
-  --primary-foreground: var(--theme-white);
+  --primary-foreground: var(--theme-on-accent);
   --secondary: var(--theme-surface-hover);
   --secondary-foreground: var(--theme-text);
   --muted: var(--theme-surface-raised);
@@ -71,7 +74,79 @@
   --sidebar: var(--theme-surface);
   --sidebar-foreground: var(--theme-text);
   --sidebar-primary: var(--theme-accent);
-  --sidebar-primary-foreground: var(--theme-white);
+  --sidebar-primary-foreground: var(--theme-on-accent);
+  --sidebar-accent: var(--theme-accent-tint);
+  --sidebar-accent-foreground: var(--theme-accent-soft);
+  --sidebar-border: var(--theme-border);
+  --sidebar-ring: rgb(var(--theme-accent-rgb) / 0.4);
+}
+
+.theme-light {
+  color-scheme: light;
+  --theme-bg: #f7f5fc;
+  --theme-bg-rgb: 247 245 252;
+  --theme-surface: #ffffff;
+  --theme-surface-rgb: 255 255 255;
+  --theme-text: #12121a;
+  --theme-text-soft: #262635;
+  --theme-text-muted: #40404f;
+  --theme-text-subtle: #565668;
+  --theme-text-dim: #666677;
+  --theme-text-dim-rgb: 102 102 119;
+  --theme-text-faint: #727284;
+  --theme-text-disabled: #85859a;
+  --theme-text-disabled-rgb: 133 133 154;
+  --theme-text-ghost: #9797a9;
+  --theme-text-hidden: #a3a3b4;
+  --theme-text-barely: #b0b0c0;
+  --theme-accent: #5b3df0;
+  --theme-accent-rgb: 91 61 240;
+  --theme-accent-hover: #4a2fe0;
+  --theme-accent-hover-alt: #7248f0;
+  --theme-accent-soft: #4c30df;
+  --theme-accent-muted: #3c27b0;
+  --theme-success: #15803d;
+  --theme-success-rgb: 21 128 61;
+  --theme-danger: #dc2626;
+  --theme-danger-rgb: 220 38 38;
+  --theme-danger-alt: #b91c1c;
+  --theme-danger-alt-rgb: 185 28 28;
+  --theme-danger-soft: #991b1b;
+  --theme-white-rgb: 18 18 26;
+  --theme-black-rgb: 18 18 26;
+  --theme-on-accent: #fff;
+  --theme-border-subtle: rgb(var(--theme-white-rgb) / 0.1);
+  --theme-border: rgb(var(--theme-white-rgb) / 0.14);
+  --theme-border-strong: rgb(var(--theme-white-rgb) / 0.22);
+  --theme-surface-raised: rgb(var(--theme-white-rgb) / 0.06);
+  --theme-surface-hover: rgb(var(--theme-white-rgb) / 0.1);
+  --theme-accent-tint: rgb(var(--theme-accent-rgb) / 0.1);
+  --theme-accent-border: rgb(var(--theme-accent-rgb) / 0.25);
+  --theme-bg-wash:
+    radial-gradient(900px 480px at 8% -12%, rgb(var(--theme-accent-rgb) / 0.14), transparent 60%),
+    radial-gradient(760px 460px at 104% -6%, rgb(var(--theme-accent-rgb) / 0.09), transparent 58%);
+
+  --background: var(--theme-bg);
+  --foreground: var(--theme-text);
+  --card: var(--theme-surface);
+  --card-foreground: var(--theme-text);
+  --popover: var(--theme-surface);
+  --popover-foreground: var(--theme-text);
+  --primary: var(--theme-accent);
+  --primary-foreground: var(--theme-on-accent);
+  --secondary: var(--theme-surface-hover);
+  --secondary-foreground: var(--theme-text);
+  --muted: var(--theme-surface-raised);
+  --muted-foreground: var(--theme-text-dim);
+  --accent: var(--theme-accent-tint);
+  --accent-foreground: var(--theme-accent-soft);
+  --border: var(--theme-border);
+  --input: rgb(var(--theme-white-rgb) / 0.12);
+  --ring: rgb(var(--theme-accent-rgb) / 0.4);
+  --sidebar: var(--theme-surface);
+  --sidebar-foreground: var(--theme-text);
+  --sidebar-primary: var(--theme-accent);
+  --sidebar-primary-foreground: var(--theme-on-accent);
   --sidebar-accent: var(--theme-accent-tint);
   --sidebar-accent-foreground: var(--theme-accent-soft);
   --sidebar-border: var(--theme-border);
