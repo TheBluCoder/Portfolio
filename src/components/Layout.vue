@@ -1,13 +1,22 @@
 <script setup>
-import { ref, computed, provide, watch } from 'vue'
+import { ref, computed, provide, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { MessageCircleIcon, HomeIcon, Code2Icon, BookOpenIcon } from 'lucide-vue-next'
+import {
+  MessageCircleIcon,
+  HomeIcon,
+  Code2Icon,
+  BookOpenIcon,
+  SunIcon,
+  MoonIcon,
+} from 'lucide-vue-next'
 import ChatBox from '@/components/ChatBox.vue'
 
 const route = useRoute()
 const isChatOpen = ref(false)
 const chatProjectContext = ref(null)
 const activeProjectContext = ref(null)
+const themeMode = ref('dark')
+const themeStorageKey = 'portfolio-theme-mode'
 
 const navLinks = [
   { to: '/', label: 'home', icon: HomeIcon, exact: true },
@@ -29,6 +38,11 @@ const closeChat = () => {
 }
 
 const hasProjectContext = computed(() => !!activeProjectContext.value)
+const isLightMode = computed(() => themeMode.value === 'light')
+const themeIcon = computed(() => (isLightMode.value ? MoonIcon : SunIcon))
+const themeToggleLabel = computed(() =>
+  isLightMode.value ? 'Switch to dark mode' : 'Switch to light mode',
+)
 
 const askBtnLabel = computed(() => {
   if (!activeProjectContext.value?.name) return 'ask me anything →'
@@ -38,6 +52,26 @@ const askBtnLabel = computed(() => {
 })
 
 watch(() => route.path, () => { if (isChatOpen.value) closeChat() })
+
+const applyTheme = (mode) => {
+  document.documentElement.classList.toggle('theme-light', mode === 'light')
+}
+
+const setThemeMode = (mode) => {
+  themeMode.value = mode
+  applyTheme(mode)
+  window.localStorage.setItem(themeStorageKey, mode)
+}
+
+const toggleThemeMode = () => {
+  setThemeMode(isLightMode.value ? 'dark' : 'light')
+}
+
+onMounted(() => {
+  const storedMode = window.localStorage.getItem(themeStorageKey)
+  const prefersLight = window.matchMedia?.('(prefers-color-scheme: light)').matches
+  setThemeMode(storedMode === 'light' || (!storedMode && prefersLight) ? 'light' : 'dark')
+})
 
 provide('openChat', openGlobalChat)
 provide('setActiveProjectChatContext', (project) => { activeProjectContext.value = project })
@@ -60,16 +94,29 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
         >{{ link.label }}</router-link>
       </nav>
 
-      <button
-        class="ask-btn"
-        :class="{ 'ask-btn--active': hasProjectContext }"
-        @click="openGlobalChat"
-      >{{ askBtnLabel }}</button>
+      <div class="nav-actions">
+        <button class="theme-toggle" :aria-label="themeToggleLabel" @click="toggleThemeMode">
+          <component :is="themeIcon" class="theme-toggle-icon" />
+        </button>
+
+        <button
+          class="ask-btn"
+          :class="{ 'ask-btn--active': hasProjectContext }"
+          @click="openGlobalChat"
+        >{{ askBtnLabel }}</button>
+      </div>
     </header>
 
     <!-- ── Mobile top bar (logo only) ── -->
     <header class="mobile-top">
       <router-link to="/" class="logo">ike.</router-link>
+      <button
+        class="theme-toggle theme-toggle--mobile"
+        :aria-label="themeToggleLabel"
+        @click="toggleThemeMode"
+      >
+        <component :is="themeIcon" class="theme-toggle-icon" />
+      </button>
     </header>
 
     <!-- ── Page content ── -->
@@ -151,6 +198,7 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   z-index: 40;
   height: 48px;
   align-items: center;
+  justify-content: space-between;
   padding: 0 1.25rem;
   background: rgb(var(--theme-bg-rgb) / 0.95);
   border-bottom: 1px solid rgb(var(--theme-white-rgb) / 0.06);
@@ -179,6 +227,13 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   display: flex;
   align-items: center;
   gap: 2.5rem;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .desktop-link {
@@ -217,11 +272,47 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   border-color: rgb(var(--theme-accent-rgb) / 0.4);
 }
 
+.theme-toggle {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--theme-surface-hover);
+  border: 1px solid var(--theme-border);
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--theme-accent-tint);
+  border-color: var(--theme-accent-border);
+  color: var(--theme-accent-soft);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.theme-toggle-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.theme-toggle--mobile {
+  width: 34px;
+  height: 34px;
+}
+
 /* Project-context active state */
 .ask-btn--active {
   background: var(--theme-accent);
   border-color: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   box-shadow: 0 0 16px rgb(var(--theme-accent-rgb) / 0.35);
   animation: btnPop 0.35s ease;
 }
@@ -300,7 +391,7 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   align-items: center;
   justify-content: center;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 20px rgb(var(--theme-accent-rgb) / 0.4);
