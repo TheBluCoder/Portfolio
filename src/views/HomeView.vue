@@ -205,7 +205,7 @@ portfolioStore.loadResume().catch(() => {})
   gap: 0.5rem;
   padding: 0.6rem 1.3rem;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: none;
   border-radius: 9999px;
   font-size: 0.875rem;

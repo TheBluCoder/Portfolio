@@ -912,7 +912,7 @@ onMounted(() => { if (isAuthenticated.value) loadAll() })
   padding: 0 4px;
   border-radius: 9999px;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   font-size: 0.6875rem;
   font-weight: 700;
 }
@@ -946,7 +946,7 @@ onMounted(() => { if (isAuthenticated.value) loadAll() })
   gap: 0.375rem;
   padding: 0.45rem 1rem;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;

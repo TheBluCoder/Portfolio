@@ -494,7 +494,7 @@ onUnmounted(() => {
 
 .pv-btn--primary {
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: 1px solid var(--theme-accent);
 }
 

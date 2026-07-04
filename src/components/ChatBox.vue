@@ -464,7 +464,7 @@ const renderMarkdown = (content) => {
   border-radius: 8px;
   background: var(--theme-accent);
   border: none;
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s, opacity 0.15s;

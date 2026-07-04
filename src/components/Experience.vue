@@ -20,7 +20,7 @@ defineProps({
         target="_blank"
         rel="noopener noreferrer"
         download="Ikeoluwa_Oladele_Resume_SWE.pdf"
-        class="bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-white)] py-2 px-4 rounded-md flex items-center transition-colors"
+        class="bg-[var(--theme-accent)] hover:bg-[var(--theme-accent-hover)] text-[var(--theme-on-accent)] py-2 px-4 rounded-md flex items-center transition-colors"
       >
         <DownloadIcon class="mr-2 h-5 w-5" />
         <span>Download Resume</span>

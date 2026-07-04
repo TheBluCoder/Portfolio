@@ -404,7 +404,7 @@ async function submitComment() {
   gap: 0.4rem;
   padding: 0.5rem 1rem;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;

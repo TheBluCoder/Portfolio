@@ -13,12 +13,12 @@ const totalTechnologies = computed(() =>
 </script>
 
 <template>
-  <section class="min-h-screen w-full bg-[var(--theme-bg)] px-4 py-8 text-[var(--theme-white)] md:px-8">
+  <section class="min-h-screen w-full bg-[var(--theme-bg)] px-4 py-8 text-[var(--theme-text)] md:px-8">
     <div class="mx-auto max-w-7xl">
       <header class="grid gap-8 border-b border-[var(--theme-border)] pb-8 lg:grid-cols-[1.3fr_0.7fr]">
         <div>
           <p class="mb-3 text-sm uppercase tracking-wide text-[var(--theme-accent-soft)]">Resume</p>
-          <h1 class="text-4xl font-bold text-[var(--theme-white)] md:text-5xl">Ikeoluwa Oladele</h1>
+          <h1 class="text-4xl font-bold text-[var(--theme-text)] md:text-5xl">Ikeoluwa Oladele</h1>
           <p class="mt-4 max-w-3xl text-lg leading-8 text-[var(--theme-text-soft)]">
             Software developer focused on practical systems, AI-assisted tooling, backend
             services, and cloud-ready applications.

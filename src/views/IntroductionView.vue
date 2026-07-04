@@ -6,7 +6,7 @@
     <!-- Typing Text Container -->
     <div class="w-full max-w-[90vw] md:max-w-[80dvw] lg:max-w-[70dvw] animate-slide-fade">
       <div class="typing-container">
-        <h1 class="text-[var(--theme-white)] text-2xl md:text-3xl lg:text-5xl mb-4 whitespace-nowrap">
+        <h1 class="text-[var(--theme-text)] text-2xl md:text-3xl lg:text-5xl mb-4 whitespace-nowrap">
           Hi<a href="https://www.animatedimages.org/cat-waving-1645.htm"
             ><img
               src="https://www.animatedimages.org/data/media/1645/animated-waving-image-0064.gif"
@@ -39,7 +39,7 @@
     <div class="absolute bottom-8 w-full flex justify-center">
       <button
         @click="handleFolderClick('about')"
-        class="text-[var(--theme-white)] animate-bounce p-2 rounded-full hover:bg-[rgb(var(--theme-white-rgb)/0.1)] transition-colors"
+        class="text-[var(--theme-text)] animate-bounce p-2 rounded-full hover:bg-[rgb(var(--theme-white-rgb)/0.1)] transition-colors"
         aria-label="Scroll to About section"
       >
         <chevron-down class="h-10 w-10"></chevron-down>
@@ -108,7 +108,7 @@ onMounted(() => {
 }
 
 .typing-text {
-  border-right: 0.1em solid var(--theme-white);
+  border-right: 0.1em solid var(--theme-text);
   white-space: nowrap;
   overflow: hidden;
 }

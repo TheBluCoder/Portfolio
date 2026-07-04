@@ -6,7 +6,7 @@
       <div class="about-container">
         <h1 class="text-[rgb(var(--theme-white-rgb)/0.32)] text-xl md:text-3xl lg:text-4xl mb-8">&lt;about /&gt;</h1>
 
-        <h2 class="text-[var(--theme-white)] text-lg md:text-xl lg:text-2xl mb-6">Ike here,👋</h2>
+        <h2 class="text-[var(--theme-text)] text-lg md:text-xl lg:text-2xl mb-6">Ike here,👋</h2>
 
         <p class="text-[rgb(var(--theme-white-rgb)/0.8)] text-base md:text-lg lg:text-xl mb-8">
           I'm a student at
@@ -18,7 +18,7 @@
           <span class="text-xs italic"> a mouthful, I know 😏</span>
         </p>
 
-        <h3 class="text-[var(--theme-white)] text-base md:text-lg lg:text-xl mb-4">A bit about me:</h3>
+        <h3 class="text-[var(--theme-text)] text-base md:text-lg lg:text-xl mb-4">A bit about me:</h3>
 
         <ul class="text-[rgb(var(--theme-white-rgb)/0.8)] space-y-4 mb-8">
           <li class="flex items-start">
@@ -49,9 +49,9 @@
         <div class="flex justify-center mt-8">
           <button
             @click="$emit('switch-view', 'introduction')"
-            class="text-[var(--theme-white)] animate-bounce p-2 rounded-full hover:bg-[rgb(var(--theme-white-rgb)/0.1)] transition-colors"
+            class="text-[var(--theme-text)] animate-bounce p-2 rounded-full hover:bg-[rgb(var(--theme-white-rgb)/0.1)] transition-colors"
           >
-            <ChevronUp class="h-10 w-10 text-[var(--theme-white)] transition-colors duration-500"></ChevronUp>
+            <ChevronUp class="h-10 w-10 text-[var(--theme-text)] transition-colors duration-500"></ChevronUp>
           </button>
         </div>
       </div>

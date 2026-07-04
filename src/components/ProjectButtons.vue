@@ -17,7 +17,7 @@ defineProps({
       :href="project.demo"
       target="_blank"
       rel="noopener noreferrer"
-      class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--theme-success)] px-4 py-3 text-base font-medium text-[var(--theme-white)] transition hover:bg-[rgb(var(--theme-success-rgb)/0.85)] sm:w-auto"
+      class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--theme-success)] px-4 py-3 text-base font-medium text-[var(--theme-on-accent)] transition hover:bg-[rgb(var(--theme-success-rgb)/0.85)] sm:w-auto"
     >
       <ExternalLinkIcon class="h-5 w-5" />
       Live demo
@@ -28,7 +28,7 @@ defineProps({
       :href="project.source_code_url"
       target="_blank"
       rel="noopener noreferrer"
-      class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--theme-surface)] px-4 py-3 text-base font-medium text-[var(--theme-white)] transition hover:bg-[rgb(var(--theme-white-rgb)/0.08)] sm:w-auto"
+      class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--theme-surface)] px-4 py-3 text-base font-medium text-[var(--theme-text)] transition hover:bg-[rgb(var(--theme-white-rgb)/0.08)] sm:w-auto"
     >
       <GithubIcon class="h-5 w-5" />
       View code

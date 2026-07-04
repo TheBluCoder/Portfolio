@@ -68,7 +68,7 @@ const hide_waving_icon = ref(false)
   height: 50px;
   background: rgb(var(--theme-surface-rgb) / 0.7);
   border-radius: 50%;
-  color: var(--theme-white);
+  color: var(--theme-text);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   border: 1px solid rgb(var(--theme-white-rgb) / 0.12);
