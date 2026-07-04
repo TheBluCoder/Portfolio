@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { HeartIcon, SendIcon, BookOpenIcon, ScrollTextIcon } from 'lucide-vue-next'
 import MarkdownIt from 'markdown-it'
@@ -37,6 +37,7 @@ const activeTab = ref('poems')
 
 const readingData = ref(_READING_DEFAULT)
 const readingLoading = ref(true)
+const coverLoadFailed = ref(false)
 const poems = ref([])
 const selectedPoemId = ref(null)
 const commentForms = ref({})
@@ -116,6 +117,16 @@ const readingProgress = computed(() => {
   const pct = Math.max(0, Math.min(100, readingData.value?.current?.progress || 0))
   return pct
 })
+
+const currentBookCover = computed(() => readingData.value?.current?.cover || '')
+
+watch(currentBookCover, () => {
+  coverLoadFailed.value = false
+})
+
+function handleBookCoverError() {
+  coverLoadFailed.value = true
+}
 </script>
 
 <template>
@@ -229,9 +240,15 @@ const readingProgress = computed(() => {
       </div>
 
       <div v-else class="reading-card">
-        <!-- Cover placeholder -->
         <div class="book-cover">
-          <BookOpenIcon class="book-cover-icon" />
+          <img
+            v-if="currentBookCover && !coverLoadFailed"
+            :src="currentBookCover"
+            :alt="`${readingData.current.title} cover`"
+            class="book-cover-img"
+            @error="handleBookCoverError"
+          />
+          <BookOpenIcon v-else class="book-cover-icon" />
         </div>
 
         <div class="book-info">
@@ -638,7 +655,7 @@ const readingProgress = computed(() => {
   gap: 0.4rem;
   padding: 0.5rem 1rem;
   background: var(--theme-accent);
-  color: var(--theme-white);
+  color: var(--theme-on-accent);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -712,6 +729,12 @@ const readingProgress = computed(() => {
   border-radius: 10px;
 }
 
+:global(.theme-light) .reading-card {
+  background: var(--theme-surface);
+  border-color: #dbe4ef;
+  box-shadow: 0 16px 40px rgb(15 23 42 / 0.08);
+}
+
 @media (max-width: 480px) {
   .reading-card {
     flex-direction: column;
@@ -728,6 +751,19 @@ const readingProgress = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+:global(.theme-light) .book-cover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.book-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .book-cover-icon {
@@ -813,6 +849,11 @@ const readingProgress = computed(() => {
   background: rgb(var(--theme-white-rgb) / 0.02);
   border: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   border-radius: 6px;
+}
+
+:global(.theme-light) .recent-book {
+  background: var(--theme-surface);
+  border-color: #e2e8f0;
 }
 
 .recent-book-title {
