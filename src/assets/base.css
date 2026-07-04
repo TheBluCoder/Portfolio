@@ -7,6 +7,6 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(155, 155, 155, 0.5);
+  background-color: rgb(var(--theme-white-rgb) / 0.32);
   border-radius: 20px;
 }

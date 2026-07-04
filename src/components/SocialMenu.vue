@@ -66,12 +66,12 @@ const hide_waving_icon = ref(false)
   justify-content: center;
   width: 50px;
   height: 50px;
-  background: rgba(20, 20, 20, 0.7);
+  background: rgb(var(--theme-surface-rgb) / 0.7);
   border-radius: 50%;
-  color: white;
+  color: var(--theme-white);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(50, 50, 50, 0.5);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.12);
   opacity: 0;
   transform: scale(0.8);
 }
@@ -98,9 +98,9 @@ const hide_waving_icon = ref(false)
 }
 
 .social-icon-link:hover {
-  background: rgba(40, 40, 40, 0.8);
+  background: rgb(var(--theme-white-rgb) / 0.08);
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 5px 15px rgb(var(--theme-black-rgb) / 0.4);
 }
 
 @keyframes socialIconPop {

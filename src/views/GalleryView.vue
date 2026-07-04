@@ -284,7 +284,7 @@ const readingProgress = computed(() => {
   display: flex;
   gap: 0.25rem;
   margin-bottom: 2.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   padding-bottom: 0;
 }
 
@@ -294,7 +294,7 @@ const readingProgress = computed(() => {
   gap: 0.4rem;
   font-size: 0.875rem;
   padding: 0.5rem 1rem;
-  color: #52506a;
+  color: var(--theme-text-disabled);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -304,12 +304,12 @@ const readingProgress = computed(() => {
 }
 
 .tab-btn:hover {
-  color: #9896b0;
+  color: var(--theme-text-muted);
 }
 
 .tab-btn--active {
-  color: #e0ddf5;
-  border-bottom-color: #8b7cf8;
+  color: var(--theme-text);
+  border-bottom-color: var(--theme-accent);
 }
 
 .tab-icon {
@@ -321,7 +321,7 @@ const readingProgress = computed(() => {
 .section-label {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.6875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 1.5rem;
@@ -358,7 +358,7 @@ const readingProgress = computed(() => {
 }
 
 .poems-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--theme-white-rgb) / 0.1);
   border-radius: 9999px;
 }
 
@@ -366,8 +366,8 @@ const readingProgress = computed(() => {
   width: 100%;
   text-align: left;
   padding: 1rem 1.125rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -379,26 +379,26 @@ const readingProgress = computed(() => {
 }
 
 .poem-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border-color: rgb(var(--theme-white-rgb) / 0.1);
 }
 
 .poem-card--active {
-  background: rgba(139, 124, 248, 0.06);
-  border-color: rgba(139, 124, 248, 0.25);
+  background: rgb(var(--theme-accent-rgb) / 0.06);
+  border-color: rgb(var(--theme-accent-rgb) / 0.25);
 }
 
 .poem-card-title {
   font-family: 'Syne', sans-serif;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 0.375rem;
 }
 
 .poem-card-excerpt {
   font-size: 0.8125rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   line-height: 1.5;
   display: -webkit-box;
   line-clamp: 2;
@@ -419,9 +419,9 @@ const readingProgress = computed(() => {
   font-size: 0.7rem;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #6a6878;
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
+  color: var(--theme-text-faint);
   letter-spacing: 0.02em;
 }
 
@@ -443,14 +443,14 @@ const readingProgress = computed(() => {
   font-family: 'Syne', sans-serif;
   font-size: clamp(1.5rem, 4vw, 2.25rem);
   font-weight: 800;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 1.5rem;
   line-height: 1.15;
 }
 
 .poem-body {
   font-size: 1rem;
-  color: #9896b0;
+  color: var(--theme-text-muted);
   line-height: 2;
   margin-bottom: 2rem;
   max-width: 55ch;
@@ -462,12 +462,12 @@ const readingProgress = computed(() => {
 }
 
 .poem-body :deep(em) {
-  color: #b5aef8;
+  color: var(--theme-accent-soft);
   font-style: italic;
 }
 
 .poem-body :deep(strong) {
-  color: #e0ddf5;
+  color: var(--theme-text);
   font-weight: 600;
 }
 
@@ -475,22 +475,22 @@ const readingProgress = computed(() => {
 .poem-body :deep(h2),
 .poem-body :deep(h3) {
   font-family: 'Syne', sans-serif;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 0.75rem;
   line-height: 1.2;
 }
 
 .poem-body :deep(blockquote) {
-  border-left: 2px solid rgba(139, 124, 248, 0.3);
+  border-left: 2px solid rgb(var(--theme-accent-rgb) / 0.3);
   padding-left: 1rem;
-  color: #7a7888;
+  color: var(--theme-text-dim);
   font-style: italic;
   margin: 1rem 0;
 }
 
 .poem-body :deep(hr) {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   margin: 1.5rem 0;
 }
 
@@ -501,9 +501,9 @@ const readingProgress = computed(() => {
   gap: 0.5rem;
   padding: 0.45rem 1rem;
   font-size: 0.8125rem;
-  color: #8884a0;
+  color: var(--theme-text-subtle);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.09);
   border-radius: 9999px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -511,8 +511,8 @@ const readingProgress = computed(() => {
 }
 
 .like-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e0ddf5;
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  color: var(--theme-text);
 }
 
 /* Comments */
@@ -525,19 +525,19 @@ const readingProgress = computed(() => {
   font-family: 'Syne', sans-serif;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #c8c6e0;
+  color: var(--theme-text-soft);
   margin-bottom: 1rem;
 }
 
 .empty-comments {
   font-size: 0.875rem;
-  color: #42405a;
+  color: var(--theme-text-hidden);
 }
 
 .comment {
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 6px;
   margin-bottom: 0.5rem;
 }
@@ -545,7 +545,7 @@ const readingProgress = computed(() => {
 .comment-author {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #b8b5d0;
+  color: var(--theme-accent-muted);
   margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
@@ -554,14 +554,14 @@ const readingProgress = computed(() => {
 
 .comment-body {
   font-size: 0.875rem;
-  color: #7a7888;
+  color: var(--theme-text-dim);
   line-height: 1.6;
 }
 
 .comment--pending {
   opacity: 0.65;
-  border-color: rgba(139, 124, 248, 0.15);
-  background: rgba(139, 124, 248, 0.03);
+  border-color: rgb(var(--theme-accent-rgb) / 0.15);
+  background: rgb(var(--theme-accent-rgb) / 0.03);
 }
 
 .pending-badge {
@@ -569,9 +569,9 @@ const readingProgress = computed(() => {
   font-family: ui-monospace, monospace;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8b7cf8;
-  background: rgba(139, 124, 248, 0.12);
-  border: 1px solid rgba(139, 124, 248, 0.2);
+  color: var(--theme-accent);
+  background: rgb(var(--theme-accent-rgb) / 0.12);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.2);
   padding: 0.1rem 0.4rem;
   border-radius: 9999px;
   font-weight: 500;
@@ -584,8 +584,8 @@ const readingProgress = computed(() => {
   flex-direction: column;
   gap: 0.625rem;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.015);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 8px;
   margin-bottom: 1rem;
 }
@@ -593,10 +593,10 @@ const readingProgress = computed(() => {
 .form-input {
   width: 100%;
   padding: 0.55rem 0.875rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.08);
   border-radius: 6px;
-  color: #e0ddf5;
+  color: var(--theme-text);
   font-size: 0.875rem;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -604,11 +604,11 @@ const readingProgress = computed(() => {
 
 .form-input:focus {
   outline: none;
-  border-color: rgba(139, 124, 248, 0.4);
+  border-color: rgb(var(--theme-accent-rgb) / 0.4);
 }
 
 .form-input::placeholder {
-  color: #42405a;
+  color: var(--theme-text-hidden);
 }
 
 .form-textarea {
@@ -629,7 +629,7 @@ const readingProgress = computed(() => {
 
 .form-note {
   font-size: 0.75rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
 }
 
 .submit-btn {
@@ -637,8 +637,8 @@ const readingProgress = computed(() => {
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  background: #8b7cf8;
-  color: #fff;
+  background: var(--theme-accent);
+  color: var(--theme-white);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -647,7 +647,7 @@ const readingProgress = computed(() => {
 }
 
 .submit-btn:hover {
-  background: #9d90fa;
+  background: var(--theme-accent-hover);
 }
 
 .upload-btn {
@@ -655,9 +655,9 @@ const readingProgress = computed(() => {
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.07);
-  color: #c8c6e0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--theme-white-rgb) / 0.07);
+  color: var(--theme-text-soft);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.1);
   border-radius: 6px;
   font-size: 0.8125rem;
   cursor: pointer;
@@ -665,12 +665,12 @@ const readingProgress = computed(() => {
 }
 
 .upload-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--theme-white-rgb) / 0.1);
 }
 
 .empty-state,
 .poems-empty {
-  color: #42405a;
+  color: var(--theme-text-hidden);
   font-size: 0.9rem;
   padding: 2rem 0;
 }
@@ -707,8 +707,8 @@ const readingProgress = computed(() => {
   gap: 1.5rem;
   align-items: flex-start;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 10px;
 }
 
@@ -723,8 +723,8 @@ const readingProgress = computed(() => {
   width: 80px;
   height: 112px;
   border-radius: 4px;
-  background: rgba(139, 124, 248, 0.1);
-  border: 1px solid rgba(139, 124, 248, 0.2);
+  background: rgb(var(--theme-accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,7 +733,7 @@ const readingProgress = computed(() => {
 .book-cover-icon {
   width: 2rem;
   height: 2rem;
-  color: rgba(139, 124, 248, 0.5);
+  color: rgb(var(--theme-accent-rgb) / 0.5);
 }
 
 .book-info {
@@ -747,13 +747,13 @@ const readingProgress = computed(() => {
   font-family: 'Syne', sans-serif;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: #e0ddf5;
+  color: var(--theme-text);
   line-height: 1.3;
 }
 
 .book-author {
   font-size: 0.875rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
 }
 
 /* Progress */
@@ -768,36 +768,36 @@ const readingProgress = computed(() => {
   flex: 1;
   height: 4px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--theme-white-rgb) / 0.07);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #8b7cf8;
+  background: var(--theme-accent);
   border-radius: 9999px;
   transition: width 0.6s ease;
 }
 
 .progress-label {
   font-size: 0.75rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   font-family: ui-monospace, monospace;
   white-space: nowrap;
 }
 
 .book-since {
   font-size: 0.75rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   font-family: ui-monospace, monospace;
 }
 
 .book-thoughts {
   font-size: 0.875rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   line-height: 1.65;
   font-style: italic;
-  border-left: 2px solid rgba(139, 124, 248, 0.25);
+  border-left: 2px solid rgb(var(--theme-accent-rgb) / 0.25);
   padding-left: 0.75rem;
   margin-top: 0.25rem;
 }
@@ -810,26 +810,26 @@ const readingProgress = computed(() => {
 
 .recent-book {
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   border-radius: 6px;
 }
 
 .recent-book-title {
   font-size: 0.875rem;
-  color: #c8c6e0;
+  color: var(--theme-text-soft);
   margin-bottom: 0.2rem;
 }
 
 .recent-book-author {
   font-size: 0.8125rem;
-  color: #52506a;
+  color: var(--theme-text-disabled);
 }
 
 .recent-empty {
   margin-top: 2rem;
   font-size: 0.875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   font-style: italic;
 }
 
@@ -840,7 +840,7 @@ const readingProgress = computed(() => {
 .skeleton-card {
   height: 140px;
   border-radius: 10px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.03) 75%);
+  background: linear-gradient(90deg, rgb(var(--theme-white-rgb) / 0.03) 25%, rgb(var(--theme-white-rgb) / 0.06) 50%, rgb(var(--theme-white-rgb) / 0.03) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }

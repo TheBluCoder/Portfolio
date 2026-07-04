@@ -53,7 +53,7 @@ const open = ref(true)
 <style scoped>
 .sec-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   margin: 3rem 0;
 }
 
@@ -72,7 +72,7 @@ const open = ref(true)
 .sec-label {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.6875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -80,7 +80,7 @@ const open = ref(true)
 .sec-chevron {
   width: 0.875rem;
   height: 0.875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
@@ -103,7 +103,7 @@ const open = ref(true)
 .skel {
   height: 0.875rem;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--theme-white-rgb) / 0.05);
   animation: pulse 1.6s ease-in-out infinite;
 }
 .skel--cat  { width: 30%; }
@@ -125,7 +125,7 @@ const open = ref(true)
   font-family: ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #4a4860;
+  color: var(--theme-text-ghost);
   margin-bottom: 0.625rem;
 }
 
@@ -139,16 +139,16 @@ const open = ref(true)
   font-size: 0.8125rem;
   padding: 0.3rem 0.8rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #7a7888;
+  background: rgb(var(--theme-white-rgb) / 0.03);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
+  color: var(--theme-text-dim);
   cursor: default;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .tech-pill:hover {
-  background: rgba(139, 124, 248, 0.08);
-  border-color: rgba(139, 124, 248, 0.22);
-  color: #b5aef8;
+  background: rgb(var(--theme-accent-rgb) / 0.08);
+  border-color: rgb(var(--theme-accent-rgb) / 0.22);
+  color: var(--theme-accent-soft);
 }
 </style>

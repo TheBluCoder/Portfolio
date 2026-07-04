@@ -57,7 +57,7 @@ const open = ref(true)
 <style scoped>
 .sec-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   margin: 3rem 0;
 }
 
@@ -76,7 +76,7 @@ const open = ref(true)
 .sec-label {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.6875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -84,7 +84,7 @@ const open = ref(true)
 .sec-chevron {
   width: 0.875rem;
   height: 0.875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
@@ -106,7 +106,7 @@ const open = ref(true)
 .skel {
   height: 0.875rem;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--theme-white-rgb) / 0.05);
   animation: pulse 1.6s ease-in-out infinite;
 }
 .skel--title  { width: 50%; height: 1.1rem; }
@@ -127,7 +127,7 @@ const open = ref(true)
 
 .exp-entry {
   padding-left: 1rem;
-  border-left: 2px solid rgba(139, 124, 248, 0.2);
+  border-left: 2px solid rgb(var(--theme-accent-rgb) / 0.2);
 }
 
 .exp-header {
@@ -145,18 +145,18 @@ const open = ref(true)
   font-family: 'Syne', sans-serif;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 0.2rem;
 }
 
 .exp-sub {
   font-size: 0.875rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
 }
 
 .exp-date {
   font-size: 0.8rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   font-family: ui-monospace, monospace;
   white-space: nowrap;
   flex-shrink: 0;
@@ -176,7 +176,7 @@ const open = ref(true)
   position: relative;
   padding-left: 1rem;
   font-size: 0.9rem;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   line-height: 1.7;
 }
 
@@ -184,6 +184,6 @@ const open = ref(true)
   content: '·';
   position: absolute;
   left: 0;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
 }
 </style>

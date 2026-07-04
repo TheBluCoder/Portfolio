@@ -10,11 +10,11 @@ defineOptions({ name: 'NavbarComponent' })
   <Transition name="slide">
     <div
       v-show="isOpen"
-      class="fixed z-30 text-2xl h-screen w-screen md:w-auto md:border-r-2 md:border-gray-300/10 shadow"
+      class="fixed z-30 text-2xl h-screen w-screen md:w-auto md:border-r-2 md:border-[rgb(var(--theme-white-rgb)/0.1)] shadow"
     >
       <nav
         tabindex="0"
-        class="group px-2 backdrop-blur-md bg-transparent h-full flex flex-col items-center justify-center gap-20 p-2 hover:text-blue-200/90 focus:text-blue-200/90 active:text-blue-200/90 transition-all duration-200 text-gray-400/40"
+        class="group px-2 backdrop-blur-md bg-transparent h-full flex flex-col items-center justify-center gap-20 p-2 hover:text-[rgb(var(--theme-accent-rgb)/0.9)] focus:text-[rgb(var(--theme-accent-rgb)/0.9)] active:text-[rgb(var(--theme-accent-rgb)/0.9)] transition-all duration-200 text-[rgb(var(--theme-text-dim-rgb)/0.4)]"
       >
         <NavButton @click="router.push('/') && (isOpen = false)">Home</NavButton>
         <NavButton @click="router.push('/about') && (isOpen = false)">About</NavButton>
