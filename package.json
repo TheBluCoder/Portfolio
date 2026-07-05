@@ -11,6 +11,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.1",
     "@tailwindcss/vite": "^4.1.2",
     "@vueuse/core": "^13.0.0",
     "class-variance-authority": "^0.7.1",

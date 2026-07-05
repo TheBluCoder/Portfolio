@@ -1,13 +1,22 @@
 <script setup>
-import { ref, computed, provide, watch } from 'vue'
+import { ref, computed, provide, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { MessageCircleIcon, HomeIcon, Code2Icon, BookOpenIcon } from 'lucide-vue-next'
+import {
+  MessageCircleIcon,
+  HomeIcon,
+  Code2Icon,
+  BookOpenIcon,
+  SunIcon,
+  MoonIcon,
+} from 'lucide-vue-next'
 import ChatBox from '@/components/ChatBox.vue'
 
 const route = useRoute()
 const isChatOpen = ref(false)
 const chatProjectContext = ref(null)
 const activeProjectContext = ref(null)
+const themeMode = ref('dark')
+const themeStorageKey = 'portfolio-theme-mode'
 
 const navLinks = [
   { to: '/', label: 'home', icon: HomeIcon, exact: true },
@@ -29,6 +38,11 @@ const closeChat = () => {
 }
 
 const hasProjectContext = computed(() => !!activeProjectContext.value)
+const isLightMode = computed(() => themeMode.value === 'light')
+const themeIcon = computed(() => (isLightMode.value ? MoonIcon : SunIcon))
+const themeToggleLabel = computed(() =>
+  isLightMode.value ? 'Switch to dark mode' : 'Switch to light mode',
+)
 
 const askBtnLabel = computed(() => {
   if (!activeProjectContext.value?.name) return 'ask me anything →'
@@ -38,6 +52,25 @@ const askBtnLabel = computed(() => {
 })
 
 watch(() => route.path, () => { if (isChatOpen.value) closeChat() })
+
+const applyTheme = (mode) => {
+  document.documentElement.classList.toggle('theme-light', mode === 'light')
+}
+
+const setThemeMode = (mode) => {
+  themeMode.value = mode
+  applyTheme(mode)
+  window.localStorage.setItem(themeStorageKey, mode)
+}
+
+const toggleThemeMode = () => {
+  setThemeMode(isLightMode.value ? 'dark' : 'light')
+}
+
+onMounted(() => {
+  const storedMode = window.localStorage.getItem(themeStorageKey)
+  setThemeMode(storedMode === 'light' ? 'light' : 'dark')
+})
 
 provide('openChat', openGlobalChat)
 provide('setActiveProjectChatContext', (project) => { activeProjectContext.value = project })
@@ -60,16 +93,29 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
         >{{ link.label }}</router-link>
       </nav>
 
-      <button
-        class="ask-btn"
-        :class="{ 'ask-btn--active': hasProjectContext }"
-        @click="openGlobalChat"
-      >{{ askBtnLabel }}</button>
+      <div class="nav-actions">
+        <button class="theme-toggle" :aria-label="themeToggleLabel" @click="toggleThemeMode">
+          <component :is="themeIcon" class="theme-toggle-icon" />
+        </button>
+
+        <button
+          class="ask-btn"
+          :class="{ 'ask-btn--active': hasProjectContext }"
+          @click="openGlobalChat"
+        >{{ askBtnLabel }}</button>
+      </div>
     </header>
 
     <!-- ── Mobile top bar (logo only) ── -->
     <header class="mobile-top">
       <router-link to="/" class="logo">ike.</router-link>
+      <button
+        class="theme-toggle theme-toggle--mobile"
+        :aria-label="themeToggleLabel"
+        @click="toggleThemeMode"
+      >
+        <component :is="themeIcon" class="theme-toggle-icon" />
+      </button>
     </header>
 
     <!-- ── Page content ── -->
@@ -112,21 +158,13 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
 
 <style scoped>
 /* ── Palette tokens ── */
-:root {
-  --bg: #0c0c10;
-  --surface: #141419;
-  --border: rgba(255, 255, 255, 0.07);
-  --text: #e0ddf5;
-  --muted: #7a7888;
-  --dim: #4a4860;
-  --accent: #8b7cf8;
-  --accent-dim: rgba(139, 124, 248, 0.12);
-}
-
 .layout-root {
   min-height: 100vh;
-  background: #0c0c10;
-  color: #e0ddf5;
+  background-color: var(--theme-bg);
+  background-image: var(--theme-bg-wash);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--theme-text);
 }
 
 /* ── Top nav (desktop only) ── */
@@ -145,8 +183,8 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
     align-items: center;
     justify-content: space-between;
     padding: 0 2rem;
-    background: rgba(12, 12, 16, 0.88);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgb(var(--theme-bg-rgb) / 0.88);
+    border-bottom: 1px solid rgb(var(--theme-white-rgb) / 0.06);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
@@ -162,9 +200,10 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   z-index: 40;
   height: 48px;
   align-items: center;
+  justify-content: space-between;
   padding: 0 1.25rem;
-  background: rgba(12, 12, 16, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-bg-rgb) / 0.95);
+  border-bottom: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -178,7 +217,7 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #e0ddf5;
+  color: var(--theme-text);
   text-decoration: none;
   transition: opacity 0.15s;
   flex-shrink: 0;
@@ -192,19 +231,26 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   gap: 2.5rem;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .desktop-link {
   font-size: 0.875rem;
   letter-spacing: 0.02em;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   text-decoration: none;
   padding-bottom: 2px;
   border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
 }
-.desktop-link:hover { color: #b8b5d0; }
+.desktop-link:hover { color: var(--theme-accent-muted); }
 .desktop-link--active {
-  color: #e0ddf5;
-  border-bottom-color: #8b7cf8;
+  color: var(--theme-text);
+  border-bottom-color: var(--theme-accent);
 }
 
 /* ── Ask button ── */
@@ -212,9 +258,9 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   font-size: 0.8125rem;
   padding: 0.4rem 1.1rem;
   border-radius: 9999px;
-  background: rgba(139, 124, 248, 0.1);
-  border: 1px solid rgba(139, 124, 248, 0.25);
-  color: #b5aef8;
+  background: rgb(var(--theme-accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.25);
+  color: var(--theme-accent-soft);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s,
               box-shadow 0.2s, transform 0.15s;
@@ -224,22 +270,58 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   text-overflow: ellipsis;
 }
 .ask-btn:hover {
-  background: rgba(139, 124, 248, 0.18);
-  border-color: rgba(139, 124, 248, 0.4);
+  background: rgb(var(--theme-accent-rgb) / 0.18);
+  border-color: rgb(var(--theme-accent-rgb) / 0.4);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--theme-surface-hover);
+  border: 1px solid var(--theme-border);
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--theme-accent-tint);
+  border-color: var(--theme-accent-border);
+  color: var(--theme-accent-soft);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.theme-toggle-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.theme-toggle--mobile {
+  width: 34px;
+  height: 34px;
 }
 
 /* Project-context active state */
 .ask-btn--active {
-  background: #8b7cf8;
-  border-color: #8b7cf8;
-  color: #fff;
-  box-shadow: 0 0 16px rgba(139, 124, 248, 0.35);
+  background: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: var(--theme-on-accent);
+  box-shadow: 0 0 16px rgb(var(--theme-accent-rgb) / 0.35);
   animation: btnPop 0.35s ease;
 }
 .ask-btn--active:hover {
-  background: #9d90fa;
-  border-color: #9d90fa;
-  box-shadow: 0 0 20px rgba(139, 124, 248, 0.5);
+  background: var(--theme-accent-hover);
+  border-color: var(--theme-accent-hover);
+  box-shadow: 0 0 20px rgb(var(--theme-accent-rgb) / 0.5);
   transform: translateY(-1px);
 }
 
@@ -272,8 +354,8 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   height: 64px;
   align-items: center;
   justify-content: space-around;
-  background: rgba(12, 12, 16, 0.97);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-bg-rgb) / 0.97);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -287,15 +369,15 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   align-items: center;
   gap: 3px;
   padding: 0.5rem 1.25rem;
-  color: #42405a;
+  color: var(--theme-text-hidden);
   text-decoration: none;
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
   transition: color 0.15s;
   min-width: 64px;
 }
-.bottom-link:hover { color: #7a7888; }
-.bottom-link--active { color: #8b7cf8; }
+.bottom-link:hover { color: var(--theme-text-dim); }
+.bottom-link--active { color: var(--theme-accent); }
 .bottom-link-icon { width: 1.25rem; height: 1.25rem; }
 
 /* ── Chat FAB (mobile only) ── */
@@ -310,17 +392,17 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   border-radius: 9999px;
   align-items: center;
   justify-content: center;
-  background: #8b7cf8;
-  color: #fff;
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(139, 124, 248, 0.4);
+  box-shadow: 0 4px 20px rgb(var(--theme-accent-rgb) / 0.4);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .chat-fab:active { transform: scale(0.94); }
 
 .chat-fab--active {
-  box-shadow: 0 4px 24px rgba(139, 124, 248, 0.65);
+  box-shadow: 0 4px 24px rgb(var(--theme-accent-rgb) / 0.65);
   animation: btnPop 0.35s ease;
 }
 
@@ -332,8 +414,8 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #4ade80;
-  border: 2px solid #0c0c10;
+  background: var(--theme-success);
+  border: 2px solid var(--theme-bg);
   animation: pulseDot 2.5s ease-in-out infinite;
 }
 
@@ -351,7 +433,7 @@ provide('clearActiveProjectChatContext', () => { activeProjectContext.value = nu
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgb(var(--theme-black-rgb) / 0.25);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }

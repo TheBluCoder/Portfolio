@@ -1,0 +1,262 @@
+Personal Portfolio - Embedding Context
+
+Overview
+
+This repository is a full-stack personal portfolio built by Ikeoluwa Oladele. It has two main parts:
+- a Vue 3 frontend built with Vite and Tailwind CSS
+- a Python FastAPI backend packaged as a Docker container and deployed to Azure App Service for Containers
+
+The portfolio is not just a static showcase. Its distinguishing feature is an AI chatbot that can answer questions about Ikeoluwa's projects, technical decisions, and portfolio content. The chatbot is embedded into the site UI and is designed to be context-aware.
+
+Core Product Goals
+
+- Present projects, writing, and resume content in a polished portfolio experience
+- Let visitors ask natural-language questions about the portfolio and individual projects
+- Keep project information synchronized with GitHub repositories instead of manually maintaining large amounts of duplicated content
+- Demonstrate practical full-stack and AI integration skills through the portfolio itself
+
+High-Level Architecture
+
+Frontend
+- Vue 3 SPA
+- Vite for local development and build
+- Tailwind CSS v4 for styling
+- Vue Router for navigation
+- Pinia for state management
+- markdown-it for rendering chat responses
+
+Backend
+- FastAPI application served by Uvicorn
+- Containerized with a backend Dockerfile
+- Deployed to Azure App Service for Containers
+- Uses Azure Table Storage for selected persistence use cases
+- Integrates with Pinecone for vector search
+- Integrates with Google Gemini for generation
+
+Infrastructure and Platform Choices
+
+Current deployment target
+- Azure App Service for Containers
+
+Why App Service for Containers was chosen over Azure Container Apps
+- The project goal was to have automated deployment from GitHub Actions
+- Azure Container Apps with the originally planned OIDC flow required Microsoft Entra ID access that was not available in the current school-managed setup
+- App Service for Containers supports a simpler deployment path using a publish profile secret, which is easier to automate under the existing account constraints
+- This kept the deployment automated without introducing VM management overhead
+
+Tradeoffs of App Service for Containers
+- Simpler deployment setup for this environment
+- Less operational overhead than maintaining a VM
+- Good fit for a single web API backend
+- Less container-native and less flexible than Azure Container Apps for future platform features such as richer container lifecycle workflows or certain scaling patterns
+
+Why not use a VM
+- VM deployment would have made SSH-based automation easier
+- But it would have added extra infrastructure responsibilities such as reverse proxy setup, OS patching, firewall configuration, and more ongoing maintenance
+- For a portfolio project, App Service for Containers was considered a better balance of reliability and operational simplicity
+
+Directory Structure
+
+Top-level
+- src/ - frontend application source
+- public/ - frontend static assets
+- backend/ - FastAPI backend
+- .github/ - workflow and project metadata
+
+Frontend structure
+- src/views/ - routed page views such as project pages and resume-related screens
+- src/components/ - reusable UI components
+- src/router/ - route definitions
+- src/stores/ - Pinia stores
+- src/data/ - local fallback content and display metadata
+
+Backend structure
+- backend/app.py - FastAPI app entrypoint
+- backend/Dockerfile - container build
+- backend/requirements.txt - Python dependencies
+- backend/src/config/ - runtime configuration and logging
+- backend/src/routes/ - HTTP endpoints
+- backend/src/services/ - business logic and integrations
+- backend/src/models/ - request/response models and schemas
+- backend/tests/ - backend unit tests
+
+Important Backend Routes
+
+Public-facing routes
+- GET /health
+- POST /api/chat
+- GET /api/projects
+- GET /api/resume
+- GET/POST/PATCH/DELETE /api/gallery/*
+- GET/PUT/POST/DELETE /api/reading/*
+
+Integration and admin routes
+- POST /api/github/webhook
+- POST /api/admin/projects/{repo}/context
+- DELETE /api/admin/resume/cache
+- admin Pinecone routes for maintenance and debugging
+
+Chat and Retrieval Architecture
+
+The chatbot is retrieval-augmented.
+
+Pipeline
+1. A chat request hits POST /api/chat
+2. A Gemini resolver decides whether the latest message is relevant to Ikeoluwa's work, portfolio, or the currently selected project
+3. If relevant, the resolver rewrites the latest message into a standalone question, especially when it is a follow-up
+4. The backend queries Pinecone for relevant project context using that standalone question
+5. Retrieved context is sent back to Google Gemini
+6. Gemini generates the final answer returned to the frontend
+
+Resolver tradeoff
+- The chatbot originally used a Pinecone topic gate seeded with representative allowed questions
+- Raw vector similarity was too permissive for binary allow/block decisions
+- Pinecone reranking improved accuracy, but its monthly free quota was tighter than Gemini's daily request quota
+- The current design uses a small Gemini resolver call before retrieval
+- This costs an extra Gemini request for relevant messages, but avoids spending Pinecone rerank calls on gate checks
+- It also handles conversational follow-ups better than hand-written heuristics
+
+Latency and quota optimizations
+
+The chat pipeline was shaped by two hard constraints: 500 Pinecone reranking calls per month and 500 Gemini generation requests per day.
+
+Parallel resolver and retrieval
+The resolver and Pinecone fetch now run concurrently instead of sequentially. Retrieval starts immediately using the raw question. Once the resolver returns, its rewritten standalone question is used for the final reranking step. If the resolver marks the query off-topic, fetched candidates are discarded without calling the reranker. This removes the resolver wait from the happy path and wastes zero rerank quota on off-topic queries.
+
+Single rerank call per message
+The original retrieval design called Pinecone rerank once per namespace. With multiple repositories indexed, every message consumed N rerank calls. The retrieval layer now performs all namespace queries in parallel without reranking, merges the candidates into one pool, and fires one rerank call on the full set. Quota cost is always one rerank call per relevant message regardless of namespace count.
+
+Namespace and host caching
+The index host URL is cached in memory after the first lookup. The namespace list is cached with a configurable TTL and invalidated immediately on write operations. This removes redundant control-plane calls from every chat request.
+
+Response streaming
+The backend streams the Gemini response token by token using a FastAPI StreamingResponse. The frontend reads incrementally and appends tokens as they arrive. Users see the first words in roughly 500ms instead of waiting for the full generation to complete.
+
+Retrieval strategy
+- Project content is stored in Pinecone under repository-based namespaces
+- The system can retrieve across relevant namespaces when answering questions
+- Project README and metadata are major context sources
+
+GitHub Project Ingestion
+
+The backend can ingest portfolio repositories from GitHub.
+
+How it works
+- Repositories associated with the portfolio topic are discovered through GitHub
+- The backend fetches repository README content and optional .github/project.json metadata
+- This content is normalized into embedding documents
+- The embedding documents are upserted into Pinecone
+
+Webhook role
+- GitHub can call the backend webhook endpoint when repository events occur
+- Supported repository activity can trigger re-ingestion or cleanup
+
+Manual context
+- Additional project-specific context can be manually uploaded using the admin API
+- Manual context is intentionally kept in a dedicated namespace suffix so it survives normal repository re-ingestion
+- This allows deeper notes that are too long, too internal, or too specialized for a README
+
+Project Metadata Model
+
+The repository contains a .github/project.json file for structured project metadata.
+
+Typical fields include
+- name
+- description
+- what
+- why
+- impact
+- image
+- video
+- demo
+- type
+- tech_stack
+- deployment_stack
+
+This metadata is used to enrich both display and retrieval context.
+
+Resume Flow
+
+- The resume page is backed by a hosted PDF
+- The backend extracts text from the PDF using pdfplumber
+- The extracted text is transformed into structured resume data using Gemini
+- Parsed result caching reduces repeated processing cost
+- Admin endpoints allow invalidating the resume cache when needed
+
+Gallery and Reading Features
+
+Gallery
+- Stores poems and related interactions
+- Supports likes
+- Supports moderated comments
+
+Reading
+- Exposes reading list state through backend CRUD endpoints
+
+Persistence
+- Azure Table Storage is used where configured
+- In-process fallbacks are available for local development scenarios
+
+Runtime and Configuration Notes
+
+Frontend environment shape
+- frontend uses Vite-style environment variables such as VITE_API_BASE_URL and endpoint-specific URLs
+
+Backend environment shape
+- backend reads from environment variables for keys, indexes, URLs, admin secrets, and storage configuration
+
+Important runtime values include
+- GOOGLE_API_KEY
+- PINECONE_API_KEY
+- GITHUB_WEBHOOK_SECRET
+- AZURE_TABLE_CONNECTION_STRING
+- ADMIN_API_KEY
+- RESUME_URL
+- CORS_ALLOWED_ORIGINS
+- PORTFOLIO_CONTEXT_INDEX
+
+Security note
+- This context intentionally does not include actual secret values
+- It describes configuration categories and architecture only
+
+CORS and Browser Access
+
+- The backend uses environment-driven CORS allowed origins
+- This supports browser access from the deployed frontend and local development origins
+- CORS is treated as browser behavior control, not as strong authentication
+
+Testing and CI/CD
+
+Backend CI workflow responsibilities
+- run backend unit tests
+- build the backend container image
+- publish the image to GitHub Container Registry
+- deploy the image to Azure Web App when workflow conditions allow
+
+Current GitHub Actions deployment approach
+- build and push image to ghcr.io/theblucoder/portfolio-backend
+- deploy using azure/webapps-deploy
+- authenticate deployment using an Azure Web App publish profile
+
+Operational caveats learned during setup
+- GitHub workflow success does not guarantee the Azure app started successfully
+- Runtime issues can still come from image pull auth, missing environment variables, or App Service plan constraints
+- A private GHCR image requires correct Azure-side registry credentials
+
+Why this repository is a strong architectural example
+
+- It combines frontend, backend, AI integration, deployment automation, and cloud hosting
+- It uses a practical retrieval pipeline instead of a toy chatbot
+- It reflects tradeoff-driven decisions, especially around deployment platform choice
+- It is designed to answer not just "what was built" but also "why it was built this way"
+
+Suggested questions this context should help answer
+
+- What is the overall architecture of the portfolio?
+- How does the chatbot work?
+- How is GitHub project data ingested and embedded?
+- Why use Azure App Service for Containers instead of Azure Container Apps or a VM?
+- What persistence systems are used?
+- What are the major directories in the repository?
+- How are manual project notes handled?
+- What are the important tradeoffs in the deployment design?

@@ -17,10 +17,10 @@ defineProps({
     :style="{ animationDelay: `${index * 200}ms` }"
   >
     <div
-      class="flex flex-col items-center justify-center p-6 bg-gray-900/50 rounded-lg backdrop-blur-sm border border-gray-700/30 transition-all duration-300 hover:border-green-500/30 hover:bg-gray-800/50"
+      class="flex flex-col items-center justify-center p-6 bg-[rgb(var(--theme-white-rgb)/0.05)] rounded-lg backdrop-blur-sm border border-[rgb(var(--theme-white-rgb)/0.3)] transition-all duration-300 hover:border-[rgb(var(--theme-success-rgb)/0.3)] hover:bg-[rgb(var(--theme-white-rgb)/0.08)]"
     >
-      <component :is="folder.icon" class="w-16 h-16 md:w-24 md:h-24 text-green-500 mb-4" />
-      <span class="text-white/80 text-lg md:text-xl group-hover:text-green-500 transition-colors">
+      <component :is="folder.icon" class="w-16 h-16 md:w-24 md:h-24 text-[var(--theme-success)] mb-4" />
+      <span class="text-[rgb(var(--theme-white-rgb)/0.8)] text-lg md:text-xl group-hover:text-[var(--theme-success)] transition-colors">
         {{ folder.name }}
       </span>
     </div>

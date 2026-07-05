@@ -55,7 +55,7 @@ const open = ref(true)
 <style scoped>
 .sec-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   margin: 3rem 0;
 }
 
@@ -74,7 +74,7 @@ const open = ref(true)
 .sec-label {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.6875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -82,7 +82,7 @@ const open = ref(true)
 .sec-chevron {
   width: 0.875rem;
   height: 0.875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
@@ -104,7 +104,7 @@ const open = ref(true)
 .skel {
   height: 0.875rem;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--theme-white-rgb) / 0.05);
   animation: pulse 1.6s ease-in-out infinite;
 }
 .skel--title { width: 50%; height: 1.1rem; }
@@ -124,8 +124,8 @@ const open = ref(true)
 
 .edu-card {
   padding: 1.25rem 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 10px;
 }
 
@@ -133,13 +133,13 @@ const open = ref(true)
   font-family: 'Syne', sans-serif;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 0.3rem;
 }
 
 .edu-program {
   font-size: 0.9rem;
-  color: #7a7888;
+  color: var(--theme-text-dim);
   margin-bottom: 0.875rem;
 }
 
@@ -148,7 +148,7 @@ const open = ref(true)
   flex-wrap: wrap;
   gap: 0.375rem 1.5rem;
   font-size: 0.8125rem;
-  color: #4a4860;
+  color: var(--theme-text-ghost);
   font-family: ui-monospace, monospace;
 }
 </style>

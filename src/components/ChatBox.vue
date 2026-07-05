@@ -261,7 +261,7 @@ const renderMarkdown = (content) => {
   display: flex;
   flex-direction: column;
   inset: 0;
-  background: rgba(10, 10, 14, 0.97);
+  background: rgb(var(--theme-bg-rgb) / 0.97);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   transform: translateX(100%);
@@ -281,8 +281,8 @@ const renderMarkdown = (content) => {
     left: auto;
     width: 400px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
+    box-shadow: 0 8px 40px rgb(var(--theme-black-rgb) / 0.6);
     transform: translateY(110%);
   }
 
@@ -297,7 +297,7 @@ const renderMarkdown = (content) => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   flex-shrink: 0;
 }
 
@@ -310,7 +310,7 @@ const renderMarkdown = (content) => {
 .chat-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.05em;
 }
 
@@ -318,7 +318,7 @@ const renderMarkdown = (content) => {
   font-family: 'Syne', sans-serif;
   font-size: 1.05rem;
   font-weight: 600;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin: 0;
   line-height: 1.2;
 }
@@ -331,16 +331,16 @@ const renderMarkdown = (content) => {
   height: 30px;
   border-radius: 6px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #52506a;
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
+  color: var(--theme-text-disabled);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   flex-shrink: 0;
 }
 
 .chat-close:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #9896b0;
+  border-color: rgb(var(--theme-white-rgb) / 0.14);
+  color: var(--theme-text-muted);
 }
 
 .chat-close-icon {
@@ -357,7 +357,7 @@ const renderMarkdown = (content) => {
   flex-direction: column;
   gap: 0.625rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(139, 124, 248, 0.2) transparent;
+  scrollbar-color: rgb(var(--theme-accent-rgb) / 0.2) transparent;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -369,7 +369,7 @@ const renderMarkdown = (content) => {
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(139, 124, 248, 0.2);
+  background: rgb(var(--theme-accent-rgb) / 0.2);
   border-radius: 4px;
 }
 
@@ -383,17 +383,17 @@ const renderMarkdown = (content) => {
 }
 
 .chat-message--human {
-  background: rgba(139, 124, 248, 0.1);
-  border: 1px solid rgba(139, 124, 248, 0.22);
-  color: #c8c6e0;
+  background: rgb(var(--theme-accent-rgb) / 0.1);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.22);
+  color: var(--theme-text-soft);
   align-self: flex-end;
   max-width: 82%;
 }
 
 .chat-message--ai {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #9896b0;
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
+  color: var(--theme-text-muted);
   align-self: stretch;
 }
 
@@ -407,7 +407,7 @@ const renderMarkdown = (content) => {
 .typing-animation span {
   width: 7px;
   height: 7px;
-  background: rgba(139, 124, 248, 0.7);
+  background: rgb(var(--theme-accent-rgb) / 0.7);
   border-radius: 50%;
   animation: typing 1s infinite ease-in-out;
 }
@@ -424,7 +424,7 @@ const renderMarkdown = (content) => {
 /* Input area */
 .chat-input-area {
   padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   flex-shrink: 0;
 }
 
@@ -436,23 +436,23 @@ const renderMarkdown = (content) => {
 
 .chat-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.08);
   border-radius: 8px;
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
-  color: #e0ddf5;
+  color: var(--theme-text);
   outline: none;
   min-width: 0;
   transition: border-color 0.15s;
 }
 
 .chat-input::placeholder {
-  color: #3e3c52;
+  color: var(--theme-text-barely);
 }
 
 .chat-input:focus {
-  border-color: rgba(139, 124, 248, 0.4);
+  border-color: rgb(var(--theme-accent-rgb) / 0.4);
 }
 
 .chat-send {
@@ -462,16 +462,16 @@ const renderMarkdown = (content) => {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: #8b7cf8;
+  background: var(--theme-accent);
   border: none;
-  color: #fff;
+  color: var(--theme-on-accent);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s, opacity 0.15s;
 }
 
 .chat-send:hover:not(:disabled) {
-  background: #9d91f9;
+  background: var(--theme-accent-hover-alt);
 }
 
 .chat-send:disabled {
@@ -494,10 +494,10 @@ const renderMarkdown = (content) => {
   font-size: 0.65rem;
 }
 
-.chat-char-hint { color: #3e3c52; }
-.chat-char-error { color: rgba(239, 68, 68, 0.65); }
-.chat-char-num { color: #52506a; }
-.chat-char-num--error { color: rgba(239, 68, 68, 0.65); }
+.chat-char-hint { color: var(--theme-text-barely); }
+.chat-char-error { color: rgb(var(--theme-danger-alt-rgb) / 0.65); }
+.chat-char-num { color: var(--theme-text-disabled); }
+.chat-char-num--error { color: rgb(var(--theme-danger-alt-rgb) / 0.65); }
 </style>
 
 <style>
@@ -526,11 +526,11 @@ const renderMarkdown = (content) => {
 }
 
 .chat-markdown li::marker {
-  color: rgba(139, 124, 248, 0.5);
+  color: rgb(var(--theme-accent-rgb) / 0.5);
 }
 
 .chat-markdown a {
-  color: #8b7cf8;
+  color: var(--theme-accent);
   text-decoration: none;
 }
 
@@ -541,8 +541,8 @@ const renderMarkdown = (content) => {
 .chat-markdown code {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.82em;
-  background: rgba(139, 124, 248, 0.08);
-  border: 1px solid rgba(139, 124, 248, 0.14);
+  background: rgb(var(--theme-accent-rgb) / 0.08);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.14);
   border-radius: 4px;
   padding: 0.1em 0.35em;
   white-space: pre-wrap;
@@ -550,19 +550,19 @@ const renderMarkdown = (content) => {
 }
 
 .chat-markdown pre {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.03);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   margin: 0.5em 0;
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(139, 124, 248, 0.2) transparent;
+  scrollbar-color: rgb(var(--theme-accent-rgb) / 0.2) transparent;
 }
 
 .chat-markdown pre::-webkit-scrollbar { height: 4px; }
 .chat-markdown pre::-webkit-scrollbar-track { background: transparent; }
-.chat-markdown pre::-webkit-scrollbar-thumb { background: rgba(139, 124, 248, 0.2); border-radius: 4px; }
+.chat-markdown pre::-webkit-scrollbar-thumb { background: rgb(var(--theme-accent-rgb) / 0.2); border-radius: 4px; }
 
 .chat-markdown pre code {
   background: none;

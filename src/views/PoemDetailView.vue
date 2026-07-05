@@ -209,7 +209,7 @@ async function submitComment() {
 }
 
 .poem-page-empty {
-  color: #42405a;
+  color: var(--theme-text-hidden);
   font-size: 0.95rem;
   padding: 3rem 0;
 }
@@ -225,9 +225,9 @@ async function submitComment() {
   font-size: 0.7rem;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #6a6878;
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
+  color: var(--theme-text-faint);
   letter-spacing: 0.02em;
 }
 
@@ -235,14 +235,14 @@ async function submitComment() {
   font-family: 'Syne', sans-serif;
   font-size: clamp(2rem, 8vw, 3rem);
   font-weight: 800;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 1.5rem;
   line-height: 1.05;
 }
 
 .poem-body {
   font-size: 1rem;
-  color: #9896b0;
+  color: var(--theme-text-muted);
   line-height: 2;
   margin-bottom: 2rem;
   max-width: 55ch;
@@ -253,28 +253,28 @@ async function submitComment() {
   white-space: pre-line;
 }
 
-.poem-body :deep(em) { color: #b5aef8; font-style: italic; }
-.poem-body :deep(strong) { color: #e0ddf5; font-weight: 600; }
+.poem-body :deep(em) { color: var(--theme-accent-soft); font-style: italic; }
+.poem-body :deep(strong) { color: var(--theme-text); font-weight: 600; }
 .poem-body :deep(h1),
 .poem-body :deep(h2),
 .poem-body :deep(h3) {
   font-family: 'Syne', sans-serif;
-  color: #e0ddf5;
+  color: var(--theme-text);
   margin-bottom: 0.75rem;
   line-height: 1.2;
 }
 
 .poem-body :deep(blockquote) {
-  border-left: 2px solid rgba(139, 124, 248, 0.3);
+  border-left: 2px solid rgb(var(--theme-accent-rgb) / 0.3);
   padding-left: 1rem;
-  color: #7a7888;
+  color: var(--theme-text-dim);
   font-style: italic;
   margin: 1rem 0;
 }
 
 .poem-body :deep(hr) {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   margin: 1.5rem 0;
 }
 
@@ -285,9 +285,9 @@ async function submitComment() {
   width: fit-content;
   padding: 0.45rem 1rem;
   font-size: 0.8125rem;
-  color: #8884a0;
+  color: var(--theme-text-subtle);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.09);
   border-radius: 9999px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -295,8 +295,8 @@ async function submitComment() {
 }
 
 .like-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e0ddf5;
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  color: var(--theme-text);
 }
 
 .comments-section { margin-bottom: 2rem; }
@@ -306,19 +306,19 @@ async function submitComment() {
   font-family: 'Syne', sans-serif;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #c8c6e0;
+  color: var(--theme-text-soft);
   margin-bottom: 1rem;
 }
 
 .empty-comments {
   font-size: 0.875rem;
-  color: #42405a;
+  color: var(--theme-text-hidden);
 }
 
 .comment {
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.02);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 6px;
   margin-bottom: 0.5rem;
 }
@@ -326,7 +326,7 @@ async function submitComment() {
 .comment-author {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #b8b5d0;
+  color: var(--theme-accent-muted);
   margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
@@ -335,14 +335,14 @@ async function submitComment() {
 
 .comment-body {
   font-size: 0.875rem;
-  color: #7a7888;
+  color: var(--theme-text-dim);
   line-height: 1.6;
 }
 
 .comment--pending {
   opacity: 0.65;
-  border-color: rgba(139, 124, 248, 0.15);
-  background: rgba(139, 124, 248, 0.03);
+  border-color: rgb(var(--theme-accent-rgb) / 0.15);
+  background: rgb(var(--theme-accent-rgb) / 0.03);
 }
 
 .pending-badge {
@@ -350,9 +350,9 @@ async function submitComment() {
   font-family: ui-monospace, monospace;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8b7cf8;
-  background: rgba(139, 124, 248, 0.12);
-  border: 1px solid rgba(139, 124, 248, 0.2);
+  color: var(--theme-accent);
+  background: rgb(var(--theme-accent-rgb) / 0.12);
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.2);
   padding: 0.1rem 0.4rem;
   border-radius: 9999px;
   font-weight: 500;
@@ -363,8 +363,8 @@ async function submitComment() {
   flex-direction: column;
   gap: 0.625rem;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--theme-white-rgb) / 0.015);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   border-radius: 8px;
   margin-bottom: 1rem;
 }
@@ -372,10 +372,10 @@ async function submitComment() {
 .form-input {
   width: 100%;
   padding: 0.55rem 0.875rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(var(--theme-white-rgb) / 0.04);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.08);
   border-radius: 6px;
-  color: #e0ddf5;
+  color: var(--theme-text);
   font-size: 0.875rem;
   transition: border-color 0.15s;
   box-sizing: border-box;
@@ -383,10 +383,10 @@ async function submitComment() {
 
 .form-input:focus {
   outline: none;
-  border-color: rgba(139, 124, 248, 0.4);
+  border-color: rgb(var(--theme-accent-rgb) / 0.4);
 }
 
-.form-input::placeholder { color: #42405a; }
+.form-input::placeholder { color: var(--theme-text-hidden); }
 .form-textarea { min-height: 6rem; resize: vertical; }
 
 .form-footer {
@@ -396,15 +396,15 @@ async function submitComment() {
   flex-wrap: wrap;
 }
 
-.form-note { font-size: 0.75rem; color: #3e3c52; }
+.form-note { font-size: 0.75rem; color: var(--theme-text-barely); }
 
 .submit-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
-  background: #8b7cf8;
-  color: #fff;
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -412,5 +412,5 @@ async function submitComment() {
   transition: background 0.15s;
 }
 
-.submit-btn:hover { background: #9d90fa; }
+.submit-btn:hover { background: var(--theme-accent-hover); }
 </style>

@@ -12,19 +12,19 @@
     "tech_stack": [
       {
         "name": "Vue 3",
-        "icon": "fa-brands fa-vuejs"
+        "icon": "devicon:vuejs"
       },
       {
         "name": "Python",
-        "icon": "fa-brands fa-python"
+        "icon": "devicon:python"
       },
       {
         "name": "FastAPI",
-        "icon": "fa-solid fa-bolt"
+        "icon": "devicon:fastapi"
       },
       {
         "name": "Gemini",
-        "icon": "fa-solid fa-wand-magic-sparkles"
+        "icon": "simple-icons:googlegemini"
       },
       {
         "name": "Pinecone",
@@ -32,7 +32,7 @@
       },
       {
         "name": "Tailwind CSS",
-        "icon": "fa-brands fa-css3-alt"
+        "icon": "devicon:tailwindcss"
       }
     ],
     "deployment_stack": [

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a personal portfolio site for Ikeoluwa Oladele. It has two independently runnable parts:
 
 - **Frontend**: Vue 3 SPA (`src/`) built with Vite, Tailwind CSS v4, and Vue Router
-- **Backend**: Python FastAPI app (`backend/`) deployed as an Azure Function, wrapping a RAG-based AI chatbot powered by Google Gemini + Pinecone
+- **Backend**: Python FastAPI app (`backend/`) deployed as an Azure App Service for Containers, wrapping a RAG-based AI chatbot powered by Google Gemini + Pinecone
 
 ---
 
@@ -38,11 +38,7 @@ python -m pytest tests/
 python -m pytest tests/test_bot.py
 
 # Run a single test by name
-python -m pytest tests/test_bot.py::BotTests::test_off_topic_question_skips_retrieval_and_llm
-
-# Seed the Pinecone topic-gate index
-python scripts/seed_questions.py
-python scripts/seed_questions.py --file my_questions.json --index questions
+python -m pytest tests/test_bot.py::BotTests::test_off_topic_question_skips_rerank_and_llm
 ```
 
 Tests use `unittest.IsolatedAsyncioTestCase` (Python stdlib); pytest discovers and runs them.
@@ -64,7 +60,8 @@ cp backend/.env.example backend/.env   # Backend API keys
 
 - **`App.vue`** — root component; wraps everything in `Layout.vue` and handles route transitions
 - **`components/Layout.vue`** — provides the global chat context via Vue `provide`/`inject`; owns `ChatBox` state and `activeProjectContext`
-- **`components/ChatBox.vue`** — chat panel; maintains per-project and global conversation histories keyed by project name; sends the full `context` array to `VITE_BOT_URL`; renders responses with `markdown-it`
+- **`components/ChatBox.vue`** — chat panel; maintains per-project and global conversation histories keyed by project name; sends the full `context` array to `VITE_BOT_URL`; reads the streamed response body incrementally; renders with `markdown-it`
+- **`components/Layout.vue`** — closes chat on outside click (transparent backdrop) and on route navigation
 - **`views/ProjectView.vue`** — project browser; calls `setActiveProjectChatContext` inject so `Layout` knows which project the user is viewing; falls back to `src/data/projects.json` when the API is unavailable
 - **`router/index.js`** — routes: `/`, `/introduction`, `/about`, `/projects`, `/gallery`, `/resume`
 
@@ -74,13 +71,12 @@ Chat project context flows: `ProjectView` → inject → `Layout` → `ChatBox` 
 
 **Entry points:**
 - `app.py` — FastAPI app (local dev via uvicorn)
-- `function_app.py` — Azure Functions V2 wrapper; uses `AsgiMiddleware` to delegate to the FastAPI app
 
 **Request path for `/api/chat`:**
-1. `routes/chat.py` — rate-limit check (IP + UA fingerprint), then delegates to `BotService`
-2. `services/Bot.py::BotService.generate_response` — builds routing query → topic gate → builds retrieval query → Pinecone retrieval → Gemini generation
-3. `services/topic_gate.py::TopicGate` — queries the `questions` Pinecone index; blocks off-topic questions below `TOPIC_GATE_THRESHOLD`
-4. `services/pinecone_service.py::PineconeService` — singleton; uses `query_similar_namespaces` to fan out across all namespaces in the `portfolio` index; uses `multilingual-e5-large` embedding + `pinecone-rerank-v0` reranker
+1. `routes/chat.py` — rate-limit check (IP + UA fingerprint), returns a `StreamingResponse` from `BotService.stream_response`
+2. `services/Bot.py::BotService.stream_response` — runs `ChatResolver` and `PineconeService.fetch_candidates` in parallel via `asyncio.gather`; gates reranking on resolver relevance; reranks using the resolver's standalone question; streams Gemini generation token-by-token
+3. `services/chat_resolver.py::ChatResolver` — single Gemini call that classifies relevance and rewrites follow-ups into standalone questions
+4. `services/pinecone_service.py::PineconeService` — singleton; `fetch_candidates` queries project namespaces in parallel (scoped to `github:<owner>:<repo>` + `:manual` when project context is present, otherwise all namespaces); `rerank_candidates` fires one `pinecone-rerank-v0` call on the merged pool (skipped when pool ≤ `PINECONE_QUERY_TOP_N`); uses `multilingual-e5-large` integrated embeddings
 
 **Other routes:**
 - `GET /api/projects` — fetches GitHub repos with the `portfolio` topic; reads `.github/project.json` for metadata
@@ -93,9 +89,9 @@ Chat project context flows: `ProjectView` → inject → `Layout` → `ChatBox` 
 **`PineconeService`** is a singleton (via `__new__`) initialized once at app startup via `lifespan`. It holds a `ThreadPoolExecutor` for parallel text chunking. Pinecone index uses `multilingual-e5-large` integrated embeddings (no separate embedding step needed).
 
 **RAG data flow:**
-- GitHub repos are indexed into Pinecone at `PORTFOLIO_CONTEXT_INDEX` (`portfolio` index), one namespace per repo (`github:<owner>:<repo>`)
-- The `questions` index is seeded via `scripts/seed_questions.py` and is used only by the topic gate
-- `BotService.build_routing_query` includes up to 4 prior turns + selected project for topic-gate context; `build_retrieval_query` only adds selected project context (not full chat history)
+- GitHub repos are indexed into Pinecone at `PORTFOLIO_CONTEXT_INDEX` (`portfolio` index), one namespace per repo (`github:<owner>:<repo>`); manual context lives in `github:<owner>:<repo>:manual`
+- When a user is on a project page, the frontend includes a hidden context message with the GitHub source URL; `Bot._extract_project_namespaces` parses it to scope retrieval to those two namespaces only
+- `build_retrieval_query` includes the selected project context but not full chat history; the resolver's `standalone_question` is used as the rerank query for better precision on follow-ups
 
 **Rate limiting:** defaults to 12 requests/60s per visitor; persisted in Azure Table `RateLimits` if `AZURE_TABLE_CONNECTION_STRING` is set, otherwise in-process memory.
 
@@ -104,7 +100,12 @@ Chat project context flows: `ProjectView` → inject → `Layout` → `ChatBox` 
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORTFOLIO_CONTEXT_INDEX` | `portfolio` | Pinecone index for RAG content |
-| `TOPIC_GATE_INDEX` | `questions` | Pinecone index for topic-gate similarity |
-| `TOPIC_GATE_THRESHOLD` | `0.00005` | Minimum reranker score to allow a question through |
-| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Generation model |
+| `PINECONE_QUERY_TOP_K` | `3` | Candidates fetched per namespace (vector-only) |
+| `PINECONE_QUERY_TOP_N` | `3` | Final results after reranking |
+| `PINECONE_NAMESPACE_CACHE_TTL` | `300` | Seconds to cache namespace list |
+| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Model used for both resolver and generation |
 | `GITHUB_PROJECT_TOPIC` | `portfolio` | GitHub topic tag that marks repos for ingestion |
+| `GITHUB_REPOS_PER_PAGE` | `100` | Repos fetched per GitHub API page |
+| `GITHUB_REPOS_TYPE` | `owner` | Repo ownership filter for GitHub API |
+| `GITHUB_REPOS_SORT` | `updated` | Sort order for GitHub repo listing |
+| `BUILD_COMMIT` | `dev` | Git SHA baked in at Docker build time; returned by `/health` |

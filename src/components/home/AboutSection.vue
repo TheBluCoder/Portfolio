@@ -56,7 +56,7 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 <style scoped>
 .sec-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.05);
   margin: 3rem 0;
 }
 
@@ -75,7 +75,7 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 .sec-label {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.6875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -83,7 +83,7 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 .sec-chevron {
   width: 0.875rem;
   height: 0.875rem;
-  color: #3e3c52;
+  color: var(--theme-text-barely);
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
@@ -110,7 +110,7 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 .skel {
   height: 0.875rem;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--theme-white-rgb) / 0.05);
   animation: pulse 1.6s ease-in-out infinite;
 }
 .skel--full  { width: 100%; }
@@ -124,8 +124,8 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 }
 
 /* ── Error ── */
-.about-error { font-size: 0.9rem; color: #6a6878; }
-.about-error a { color: #8b7cf8; text-decoration: none; }
+.about-error { font-size: 0.9rem; color: var(--theme-text-faint); }
+.about-error a { color: var(--theme-accent); text-decoration: none; }
 .about-error a:hover { text-decoration: underline; }
 
 /* ── README prose ── */
@@ -135,7 +135,7 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 :deep(.readme-content) h4 {
   font-family: 'Syne', sans-serif;
   font-weight: 700;
-  color: #e0ddf5;
+  color: var(--theme-text);
   line-height: 1.3;
   margin-top: 2rem;
   margin-bottom: 0.625rem;
@@ -143,26 +143,26 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 :deep(.readme-content) h1 { font-size: 1.625rem; }
 :deep(.readme-content) h2 { font-size: 1.25rem; }
 :deep(.readme-content) h3 { font-size: 1.0625rem; }
-:deep(.readme-content) h4 { font-size: 0.9375rem; color: #b8b5d0; }
+:deep(.readme-content) h4 { font-size: 0.9375rem; color: var(--theme-accent-muted); }
 :deep(.readme-content) p {
-  color: #8884a0;
+  color: var(--theme-text-subtle);
   font-size: 0.9375rem;
   line-height: 1.8;
   margin-bottom: 1rem;
 }
-:deep(.readme-content) a { color: #8b7cf8; text-decoration: none; }
+:deep(.readme-content) a { color: var(--theme-accent); text-decoration: none; }
 :deep(.readme-content) a:hover { text-decoration: underline; }
 :deep(.readme-content) img { max-width: 100%; height: auto; border-radius: 6px; }
 :deep(.readme-content) code {
   font-size: 0.85em;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--theme-white-rgb) / 0.07);
   padding: 0.1em 0.4em;
   border-radius: 3px;
-  color: #c8c6e0;
+  color: var(--theme-text-soft);
 }
 :deep(.readme-content) pre {
-  background: #141419;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--theme-surface);
+  border: 1px solid rgb(var(--theme-white-rgb) / 0.08);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -172,21 +172,21 @@ const rendered = computed(() => props.content ? md.render(props.content) : '')
 :deep(.readme-content) ul,
 :deep(.readme-content) ol { padding-left: 1.5rem; margin-bottom: 1rem; }
 :deep(.readme-content) li {
-  color: #8884a0;
+  color: var(--theme-text-subtle);
   font-size: 0.9375rem;
   line-height: 1.75;
   margin-bottom: 0.3rem;
 }
 :deep(.readme-content) blockquote {
-  border-left: 2px solid rgba(139, 124, 248, 0.4);
+  border-left: 2px solid rgb(var(--theme-accent-rgb) / 0.4);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #6a6878;
+  color: var(--theme-text-faint);
   font-style: italic;
 }
 :deep(.readme-content) hr {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgb(var(--theme-white-rgb) / 0.06);
   margin: 1.5rem 0;
 }
 </style>
