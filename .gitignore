@@ -40,3 +40,5 @@ __pycache__/
 
 # Local-only project context payloads
 .github/context.json
+.github/context.md
+.github/context.txt
