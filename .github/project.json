@@ -35,9 +35,5 @@
         "icon": "devicon:tailwindcss"
       }
     ],
-    "deployment_stack": [
-      "Azure App Service",
-      "Azure Table Storage"
-    ]
   }
 ]
