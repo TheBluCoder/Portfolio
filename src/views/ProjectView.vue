@@ -3,6 +3,7 @@ import { computed, inject, nextTick, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ExternalLinkIcon, GithubIcon } from 'lucide-vue-next'
 import { usePortfolioStore } from '@/stores/portfolio'
+import SkillIconTile from '@/components/SkillIconTile.vue'
 
 const setActiveProjectChatContext = inject('setActiveProjectChatContext', () => { })
 const clearActiveProjectChatContext = inject('clearActiveProjectChatContext', () => { })
@@ -102,11 +103,6 @@ const techStack = computed(() =>
 const deploymentStack = computed(() =>
   stackItems(selectedProject.value, ['deployment_stack', 'deploymentStack', 'deployment']),
 )
-
-const stackIconClass = (item) => {
-  if (typeof item === 'string') return ''
-  return item?.icon || item?.class || ''
-}
 
 const stackIconLabel = (item) => {
   if (typeof item === 'string') return item
@@ -210,16 +206,23 @@ onUnmounted(() => {
             <!-- Mobile-only: horizontal icon tiles right under media -->
             <div class="pv-tech-mobile">
               <div v-if="techStack.length" class="tech-tiles-h">
-                <div v-for="item in techStack" :key="stackIconLabel(item)" class="tech-tile-h"
-                  :title="stackIconLabel(item)">
-                  <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-h"></i>
-                  <i v-else class="fa-solid fa-code tech-icon-h"></i>
-                  <span class="tech-name-h">{{ stackIconLabel(item) }}</span>
-                </div>
+                <SkillIconTile
+                  v-for="item in techStack"
+                  :key="stackIconLabel(item)"
+                  :skill="item"
+                  compact
+                  fallback-icon
+                />
               </div>
               <div v-if="deploymentStack.length" class="deploy-row-h">
                 <span class="deploy-label">on</span>
-                <span v-for="item in deploymentStack" :key="item" class="deploy-pill">{{ item }}</span>
+                <SkillIconTile
+                  v-for="item in deploymentStack"
+                  :key="stackIconLabel(item)"
+                  :skill="item"
+                  compact
+                  fallback-icon
+                />
               </div>
             </div>
 
@@ -281,18 +284,25 @@ onUnmounted(() => {
             <p class="section-label">// how</p>
 
             <div v-if="techStack.length" class="tech-tiles-v">
-              <div v-for="item in techStack" :key="stackIconLabel(item)" class="tech-tile-v"
-                :title="stackIconLabel(item)">
-                <i v-if="stackIconClass(item)" :class="stackIconClass(item)" class="tech-icon-v"></i>
-                <i v-else class="fa-solid fa-code tech-icon-v"></i>
-                <span class="tech-name-v">{{ stackIconLabel(item) }}</span>
-              </div>
+                <SkillIconTile
+                  v-for="item in techStack"
+                  :key="stackIconLabel(item)"
+                  :skill="item"
+                  compact
+                  fallback-icon
+                />
             </div>
 
             <template v-if="deploymentStack.length">
               <p class="deploy-label-v">deployed on</p>
               <div class="deploy-pills-v">
-                <span v-for="item in deploymentStack" :key="item" class="deploy-pill-v">{{ item }}</span>
+                <SkillIconTile
+                  v-for="item in deploymentStack"
+                  :key="stackIconLabel(item)"
+                  :skill="item"
+                  compact
+                  fallback-icon
+                />
               </div>
             </template>
           </aside>
@@ -760,50 +770,8 @@ onUnmounted(() => {
 .tech-tiles-h {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tech-tile-h {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem 0.5rem 0.4rem;
-  background: rgb(var(--theme-white-rgb) / 0.03);
-  border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
-  border-radius: 8px;
-  min-width: 52px;
-  cursor: default;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.tech-tile-h:hover {
-  background: rgb(var(--theme-accent-rgb) / 0.08);
-  border-color: rgb(var(--theme-accent-rgb) / 0.2);
-}
-
-.tech-icon-h {
-  font-size: 1.125rem;
-  color: var(--theme-text-dim);
-  transition: color 0.15s;
-}
-
-.tech-tile-h:hover .tech-icon-h {
-  color: var(--theme-accent-soft);
-}
-
-.tech-name-h {
-  font-size: 0.5625rem;
-  color: var(--theme-text-disabled);
-  text-align: center;
-  line-height: 1.2;
-  word-break: break-word;
-  max-width: 56px;
-  transition: color 0.15s;
-}
-
-.tech-tile-h:hover .tech-name-h {
-  color: var(--theme-text-muted);
+  gap: 0.85rem 0.625rem;
 }
 
 .deploy-row-h {
@@ -840,49 +808,9 @@ onUnmounted(() => {
   .tech-tiles-v {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    margin-bottom: 0.875rem;
-  }
-
-  .tech-tile-v {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.625rem 0.375rem 0.5rem;
-    background: rgb(var(--theme-white-rgb) / 0.03);
-    border: 1px solid rgb(var(--theme-white-rgb) / 0.06);
-    border-radius: 8px;
-    cursor: default;
-    text-align: center;
-    transition: background 0.15s, border-color 0.15s;
-  }
-
-  .tech-tile-v:hover {
-    background: rgb(var(--theme-accent-rgb) / 0.08);
-    border-color: rgb(var(--theme-accent-rgb) / 0.2);
-  }
-
-  .tech-icon-v {
-    font-size: 1.375rem;
-    color: var(--theme-text-dim);
-    transition: color 0.15s;
-  }
-
-  .tech-tile-v:hover .tech-icon-v {
-    color: var(--theme-accent-soft);
-  }
-
-  .tech-name-v {
-    font-size: 0.5625rem;
-    color: var(--theme-text-disabled);
-    line-height: 1.3;
-    word-break: break-word;
-    transition: color 0.15s;
-  }
-
-  .tech-tile-v:hover .tech-name-v {
-    color: var(--theme-text-muted);
+    gap: 0.75rem;
+    margin-bottom: 0.875rem;
   }
 
   .deploy-label-v {

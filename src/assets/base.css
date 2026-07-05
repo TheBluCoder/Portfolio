@@ -10,3 +10,21 @@
   background-color: rgb(var(--theme-white-rgb) / 0.32);
   border-radius: 20px;
 }
+
+.theme-light .scrollbar-thin::-webkit-scrollbar-thumb {
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--theme-accent-rgb) / 0.72),
+      rgb(var(--theme-success-rgb) / 0.64)
+    );
+}
+
+.theme-light .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--theme-accent-rgb) / 0.9),
+      rgb(var(--theme-success-rgb) / 0.78)
+    );
+}

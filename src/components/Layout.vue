@@ -69,8 +69,7 @@ const toggleThemeMode = () => {
 
 onMounted(() => {
   const storedMode = window.localStorage.getItem(themeStorageKey)
-  const prefersLight = window.matchMedia?.('(prefers-color-scheme: light)').matches
-  setThemeMode(storedMode === 'light' || (!storedMode && prefersLight) ? 'light' : 'dark')
+  setThemeMode(storedMode === 'light' ? 'light' : 'dark')
 })
 
 provide('openChat', openGlobalChat)

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { ChevronDownIcon } from 'lucide-vue-next'
+import SkillIconTile from '@/components/SkillIconTile.vue'
 
 defineProps({
   groups: { type: Array, default: () => [] },
@@ -21,25 +22,23 @@ const open = ref(true)
 
     <div class="sec-body" :class="{ 'sec-body--closed': !open }">
       <div class="sec-inner">
-
-        <!-- Skeleton -->
         <div v-if="loading" class="skeletons">
           <div class="skel skel--cat"></div>
           <div class="skel-pills">
-            <div class="skel skel--pill" v-for="i in 5" :key="i"></div>
+            <div class="skel skel--tile" v-for="i in 5" :key="i"></div>
           </div>
         </div>
 
-        <!-- Groups -->
         <div v-else class="skills-list">
           <div v-for="group in groups" :key="group.category" class="skill-group">
             <h4 class="skill-category">{{ group.category }}</h4>
             <div class="tech-pills">
-              <span
+              <SkillIconTile
                 v-for="tech in group.technologies"
                 :key="tech.name || tech"
-                class="tech-pill"
-              >{{ tech.name || tech }}</span>
+                :skill="tech"
+                compact
+              />
             </div>
           </div>
         </div>
@@ -84,6 +83,7 @@ const open = ref(true)
   transition: transform 0.25s ease;
   flex-shrink: 0;
 }
+
 .sec-chevron--open { transform: rotate(180deg); }
 
 .sec-body {
@@ -92,28 +92,30 @@ const open = ref(true)
   transition: grid-template-rows 0.35s ease;
   overflow: hidden;
 }
+
 .sec-body--closed { grid-template-rows: 0fr; }
 
 .sec-inner { overflow: hidden; min-height: 0; }
 .sec-gap { height: 0.5rem; }
 
-/* ── Skeletons ── */
 .skeletons { display: flex; flex-direction: column; gap: 0.75rem; }
-.skel-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.skel-pills { display: flex; gap: 0.625rem; flex-wrap: wrap; }
+
 .skel {
   height: 0.875rem;
   border-radius: 4px;
   background: rgb(var(--theme-white-rgb) / 0.05);
   animation: pulse 1.6s ease-in-out infinite;
 }
-.skel--cat  { width: 30%; }
-.skel--pill { width: 4rem; height: 1.75rem; border-radius: 9999px; }
+
+.skel--cat { width: 30%; }
+.skel--tile { width: 5.25rem; height: 5.9rem; border-radius: 8px; }
+
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
-  50%       { opacity: 0.9; }
+  50% { opacity: 0.9; }
 }
 
-/* ── Skills ── */
 .skills-list {
   display: flex;
   flex-direction: column;
@@ -132,23 +134,7 @@ const open = ref(true)
 .tech-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tech-pill {
-  font-size: 0.8125rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 9999px;
-  background: rgb(var(--theme-white-rgb) / 0.03);
-  border: 1px solid rgb(var(--theme-white-rgb) / 0.07);
-  color: var(--theme-text-dim);
-  cursor: default;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.tech-pill:hover {
-  background: rgb(var(--theme-accent-rgb) / 0.08);
-  border-color: rgb(var(--theme-accent-rgb) / 0.22);
-  color: var(--theme-accent-soft);
+  gap: 0.85rem 0.625rem;
+  align-items: center;
 }
 </style>

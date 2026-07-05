@@ -731,8 +731,8 @@ function handleBookCoverError() {
 
 :global(.theme-light) .reading-card {
   background: var(--theme-surface);
-  border-color: #dbe4ef;
-  box-shadow: 0 16px 40px rgb(15 23 42 / 0.08);
+  border-color: var(--theme-border);
+  box-shadow: 0 1px 3px rgb(var(--theme-black-rgb) / 0.1), 0 12px 30px rgb(var(--theme-black-rgb) / 0.08);
 }
 
 @media (max-width: 480px) {
@@ -755,8 +755,8 @@ function handleBookCoverError() {
 }
 
 :global(.theme-light) .book-cover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: var(--theme-accent-tint);
+  border-color: var(--theme-accent-border);
 }
 
 .book-cover-img {
@@ -853,7 +853,7 @@ function handleBookCoverError() {
 
 :global(.theme-light) .recent-book {
   background: var(--theme-surface);
-  border-color: #e2e8f0;
+  border-color: var(--theme-border-subtle);
 }
 
 .recent-book-title {
